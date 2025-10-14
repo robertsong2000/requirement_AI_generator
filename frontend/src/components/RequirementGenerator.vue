@@ -56,41 +56,30 @@
             />
           </el-form-item>
 
-          <!-- 需求描述 -->
-          <el-form-item :label="t('需求描述')">
-            <div class="requirement-input-wrapper">
-              <div class="requirement-edit-input">
-                <el-input
-                  v-model="requirementData.description"
-                  type="textarea"
-                  :rows="8"
-                  :placeholder="t('请输入详细的需求描述...')"
-                  maxlength="5000"
-                  show-word-limit
-                />
-                <div class="edit-actions">
-                  <el-button size="small" @click="clearRequirement">
-                    🗑️ {{ t('清空') }}
-                  </el-button>
-                  <el-upload
-                    ref="uploadRef"
-                    :auto-upload="false"
-                    :show-file-list="false"
-                    accept=".txt,.md,.json"
-                    :on-change="handleFileUpload"
-                    :before-upload="beforeFileUpload"
-                  >
-                    <el-button type="primary" plain size="small">
-                      📁 {{ t('加载文件') }}
-                    </el-button>
-                  </el-upload>
-                  <el-tooltip :content="t('支持 .txt, .md, .json 格式，最大5MB')" placement="top">
-                    <el-icon class="help-icon"><QuestionFilled /></el-icon>
-                  </el-tooltip>
-                </div>
+          <!-- 文件加载操作 -->
+          <div class="file-load-section">
+            <el-form-item :label="t('加载需求文件')">
+              <el-upload
+                ref="uploadRef"
+                :auto-upload="false"
+                :show-file-list="false"
+                accept=".txt,.md,.json"
+                :on-change="handleFileUpload"
+                :before-upload="beforeFileUpload"
+                style="width: 100%;"
+              >
+                <el-button type="primary" plain style="width: 100%;">
+                  📁 {{ t('加载需求文件') }}
+                </el-button>
+              </el-upload>
+              <div class="file-info">
+                <el-tooltip :content="t('支持 .txt, .md, .json 格式，最大5MB')" placement="top">
+                  <el-icon class="help-icon"><QuestionFilled /></el-icon>
+                </el-tooltip>
+                <span class="file-support-info">{{ t('支持文本、Markdown、JSON格式') }}</span>
               </div>
-            </div>
-          </el-form-item>
+            </el-form-item>
+          </div>
 
           <!-- 附加参数 -->
           <div class="additional-params">
@@ -252,7 +241,7 @@
       <!-- 右侧内容区域 -->
       <main class="content-area">
         <!-- 需求描述面板 -->
-        <section class="requirement-description-panel" v-if="requirementData.description">
+        <section class="requirement-description-panel">
           <div class="panel-header">
             <h3>📄 {{ t('需求描述') }}
               <span style="color: #409eff; font-size: 14px; font-weight: normal;">
@@ -286,6 +275,9 @@
               <div v-if="requirementData.description" style="color: #666; font-size: 12px; margin-left: 10px;">
                 📊 {{ requirementStats.characters }} {{ t('字符') }} | {{ requirementStats.lines }} {{ t('行') }}
               </div>
+              <div v-else style="color: #999; font-size: 12px; margin-left: 10px;">
+                💡 {{ t('点击下方区域开始编辑需求描述') }}
+              </div>
             </div>
           </div>
 
@@ -317,11 +309,17 @@
               class="requirement-content-display"
               :class="{
                 'language-markdown': requirementLanguage === 'markdown',
-                'language-plaintext': requirementLanguage === 'plaintext'
+                'language-plaintext': requirementLanguage === 'plaintext',
+                'empty-content': !requirementData.description
               }"
-              v-html="highlightedRequirementContent"
-              @click="isEditingRequirement = true"
-            ></div>
+              @click="!requirementData.description && toggleEditRequirement()"
+            >
+              <div v-if="requirementData.description" v-html="highlightedRequirementContent"></div>
+              <div v-else class="empty-content-hint">
+                <p>{{ t('📝 请输入需求描述...') }}</p>
+                <p style="font-size: 12px; color: #999;">{{ t('点击此处开始编辑，或使用左侧加载文件按钮导入需求') }}</p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1209,10 +1207,6 @@ const resetForm = () => {
   ElMessage.success(t('表单已重置'))
 }
 
-const clearRequirement = () => {
-  requirementData.description = ''
-  ElMessage.success(t('需求描述已清空'))
-}
 
 const toggleEditRequirement = () => {
   if (!isEditingRequirement.value) {
