@@ -312,12 +312,14 @@
         </section>
 
         <!-- 加载和错误状态 -->
-        <div v-if="isParsing" class="loading">
-          <div v-loading="isParsing" :element-loading-text="t('正在解析需求...')"></div>
+        <div v-if="isParsing" class="loading horizontal-loading">
+          <div class="loading-spinner"></div>
+          <span class="loading-text">{{ t('正在解析需求...') }}</span>
         </div>
 
-        <div v-if="isGenerating" class="loading">
-          <div v-loading="isGenerating" :element-loading-text="t('正在生成测试用例...')"></div>
+        <div v-if="isGenerating" class="loading horizontal-loading">
+          <div class="loading-spinner"></div>
+          <span class="loading-text">{{ t('正在生成测试用例...') }}</span>
         </div>
 
         <div v-if="errorMessage" class="error-message">
