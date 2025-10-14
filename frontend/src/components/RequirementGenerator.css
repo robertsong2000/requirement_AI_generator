@@ -318,13 +318,33 @@
 
 .action-buttons {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.main-actions {
+  display: flex;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-.action-buttons .el-button {
+.main-actions .el-upload {
+  flex: 1;
+}
+
+.main-actions .el-button {
   flex: 1;
   min-width: 120px;
+}
+
+.reset-action {
+  display: flex;
+  justify-content: center;
+}
+
+.reset-action .el-button {
+  min-width: 120px;
+  max-width: 200px;
 }
 
 .testcase-list-panel {
@@ -803,7 +823,15 @@
     flex-direction: column;
   }
 
-  .action-buttons .el-button {
+  .main-actions {
+    flex-direction: column;
+  }
+
+  .main-actions .el-button {
+    width: 100%;
+  }
+
+  .reset-action .el-button {
     width: 100%;
   }
 }

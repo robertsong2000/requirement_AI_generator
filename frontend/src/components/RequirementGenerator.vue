@@ -116,29 +116,34 @@
 
           <!-- 操作按钮 -->
           <div class="action-buttons">
-            <el-upload
-              ref="uploadRef"
-              :auto-upload="false"
-              :show-file-list="false"
-              accept=".txt,.md,.json"
-              :on-change="handleFileUpload"
-              :before-upload="beforeFileUpload"
-              style="width: 100%; margin-bottom: 12px;"
-            >
-              <el-button type="primary" plain style="width: 100%;">
-                📁 {{ t('加载需求文件') }}
-              </el-button>
-            </el-upload>
+            <div class="main-actions">
+              <el-upload
+                ref="uploadRef"
+                :auto-upload="false"
+                :show-file-list="false"
+                accept=".txt,.md,.json"
+                :on-change="handleFileUpload"
+                :before-upload="beforeFileUpload"
+              >
+                <el-button type="primary" plain>
+                  📁 {{ t('加载需求文件') }}
+                </el-button>
+              </el-upload>
 
-            <el-button type="primary" @click="parseRequirement" :loading="isParsing" style="width: 100%;">
-              🔍 {{ t('解析需求') }}
-            </el-button>
-            <el-button type="success" @click="generateTestCase" :loading="isGenerating" :disabled="!parsedRequirement" style="width: 100%;">
-              🚀 {{ t('生成测试用例') }}
-            </el-button>
-            <el-button @click="resetForm" style="width: 100%;">
-              🔄 {{ t('重置') }}
-            </el-button>
+              <el-button type="primary" @click="parseRequirement" :loading="isParsing">
+                🔍 {{ t('解析需求') }}
+              </el-button>
+
+              <el-button type="success" @click="generateTestCase" :loading="isGenerating" :disabled="!parsedRequirement">
+                🚀 {{ t('生成测试用例') }}
+              </el-button>
+            </div>
+
+            <div class="reset-action">
+              <el-button @click="resetForm">
+                🔄 {{ t('重置') }}
+              </el-button>
+            </div>
           </div>
         </section>
 
