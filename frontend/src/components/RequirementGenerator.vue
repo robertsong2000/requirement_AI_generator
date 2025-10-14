@@ -58,14 +58,33 @@
 
           <!-- 需求描述输入 -->
           <el-form-item :label="t('需求描述')">
-            <el-input
-              v-model="requirementData.description"
-              type="textarea"
-              :rows="8"
-              :placeholder="t('请输入详细的需求描述...')"
-              maxlength="5000"
-              show-word-limit
-            />
+            <div class="requirement-input-wrapper">
+              <el-input
+                v-model="requirementData.description"
+                type="textarea"
+                :rows="8"
+                :placeholder="t('请输入详细的需求描述...')"
+                maxlength="5000"
+                show-word-limit
+              />
+              <div class="file-upload-button">
+                <el-upload
+                  ref="uploadRef"
+                  :auto-upload="false"
+                  :show-file-list="false"
+                  accept=".txt,.md,.json"
+                  :on-change="handleFileUpload"
+                  :before-upload="beforeFileUpload"
+                >
+                  <el-button type="primary" plain size="small">
+                    📁 {{ t('加载文件') }}
+                  </el-button>
+                </el-upload>
+                <el-tooltip :content="t('支持 .txt, .md, .json 格式，最大5MB')" placement="top">
+                  <el-icon class="help-icon"><QuestionFilled /></el-icon>
+                </el-tooltip>
+              </div>
+            </div>
           </el-form-item>
 
           <!-- 附加参数 -->
@@ -456,7 +475,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { InfoFilled } from '@element-plus/icons-vue'
+import { InfoFilled, QuestionFilled, UploadFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
 import 'element-plus/dist/index.css'
 import 'highlight.js/styles/github.css'
@@ -544,6 +563,8 @@ const parsedRequirement = ref<ParsedRequirement | null>(null)
 const selectedTestCase = ref<GeneratedTestCase | null>(null)
 const generatedTestCases = ref<GeneratedTestCase[]>([])
 const testCasesGroups = ref<TestCasesGroup[]>([])
+const uploadRef = ref<any>(null)
+const isUploading = ref<boolean>(false)
 
 // 表单数据
 const requirementData = reactive<RequirementData>({
@@ -1148,6 +1169,130 @@ const singleTestCases = computed(() => {
 const hasSingleTestCases = computed(() => {
   return singleTestCases.value.length > 0
 })
+
+// 文件上传相关方法
+const beforeFileUpload = (file: any) => {
+  const allowedTypes = ['text/plain', 'text/markdown', 'application/json']
+  const allowedExtensions = ['.txt', '.md', '.json']
+
+  const isValidType = allowedTypes.includes(file.type) ||
+                     allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+
+  if (!isValidType) {
+    ElMessage.error(t('只支持 .txt, .md, .json 格式的文件'))
+    return false
+  }
+
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    ElMessage.error(t('文件大小不能超过 5MB'))
+    return false
+  }
+
+  return true
+}
+
+const handleFileUpload = (uploadFile: any) => {
+  // Element Plus传递的是对象，需要获取实际的文件
+  const file = uploadFile.raw || uploadFile.file
+
+  if (!file) {
+    ElMessage.error(t('文件获取失败'))
+    return
+  }
+
+  if (!beforeFileUpload(file)) {
+    return
+  }
+
+  isUploading.value = true
+
+  const reader = new FileReader()
+  const fileType = file.name.toLowerCase().split('.').pop()
+
+  reader.onload = (e) => {
+    try {
+      const content = e.target?.result as string
+
+      switch (fileType) {
+        case 'json':
+          parseJsonFile(content, file.name)
+          break
+        case 'md':
+        case 'txt':
+          parseTextFile(content, file.name)
+          break
+        default:
+          ElMessage.error(t('不支持的文件格式'))
+      }
+    } catch (error: any) {
+      console.error('文件解析失败:', error)
+      ElMessage.error(t('文件解析失败: ') + error.message)
+    } finally {
+      isUploading.value = false
+    }
+  }
+
+  reader.onerror = () => {
+    ElMessage.error(t('文件读取失败'))
+    isUploading.value = false
+  }
+
+  reader.readAsText(file, 'UTF-8')
+}
+
+const parseTextFile = (content: string, fileName: string) => {
+  // 从文件名提取标题（可选）
+  const titleFromFileName = fileName.replace(/\.(txt|md)$/i, '')
+
+  // 填充需求描述
+  requirementData.description = content
+
+  // 如果标题为空，尝试从文件名设置
+  if (!requirementData.title) {
+    requirementData.title = titleFromFileName
+  }
+
+  ElMessage.success(t('文件加载成功: ') + fileName)
+}
+
+const parseJsonFile = (content: string, fileName: string) => {
+  try {
+    const data = JSON.parse(content)
+
+    // 支持多种JSON结构
+    if (data.title || data.name) {
+      requirementData.title = data.title || data.name
+    }
+
+    if (data.description || data.content || data.requirement) {
+      requirementData.description = data.description || data.content || data.requirement
+    } else if (typeof data === 'string') {
+      requirementData.description = data
+    } else {
+      // 如果JSON是复杂对象，尝试格式化显示
+      requirementData.description = JSON.stringify(data, null, 2)
+    }
+
+    // 自动设置其他参数（如果存在）
+    if (data.testType) {
+      requirementData.testType = data.testType
+    }
+
+    if (data.priority) {
+      requirementData.priority = data.priority
+    }
+
+    if (data.complexity) {
+      requirementData.complexity = data.complexity
+    }
+
+    ElMessage.success(t('JSON文件加载成功: ') + fileName)
+
+  } catch (error) {
+    throw new Error(t('JSON格式错误: ') + error.message)
+  }
+}
 </script>
 
 <style scoped>

@@ -81,6 +81,22 @@ export const useLanguageStore = defineStore('language', () => {
     '覆盖说明': { zh: '覆盖说明', en: 'Coverage Description' },
     '预览测试用例': { zh: '预览测试用例', en: 'Test Cases Preview' },
 
+    // 文件上传相关
+    '加载文件': { zh: '加载文件', en: 'Load File' },
+    '支持 .txt, .md, .json 格式': { zh: '支持 .txt, .md, .json 格式', en: 'Supports .txt, .md, .json formats' },
+    '支持 .txt, .md, .json 格式，最大5MB': { zh: '支持 .txt, .md, .json 格式，最大5MB', en: 'Supports .txt, .md, .json formats, max 5MB' },
+    '从文件加载需求': { zh: '从文件加载需求', en: 'Load Requirements from File' },
+    '点击或拖拽文件到此区域上传': { zh: '点击或拖拽文件到此区域上传', en: 'Click or drag file to this area to upload' },
+    '只支持 .txt, .md, .json 格式的文件': { zh: '只支持 .txt, .md, .json 格式的文件', en: 'Only .txt, .md, .json files are supported' },
+    '文件大小不能超过 5MB': { zh: '文件大小不能超过 5MB', en: 'File size cannot exceed 5MB' },
+    '文件加载成功': { zh: '文件加载成功', en: 'File loaded successfully' },
+    'JSON文件加载成功': { zh: 'JSON文件加载成功', en: 'JSON file loaded successfully' },
+    '不支持的文件格式': { zh: '不支持的文件格式', en: 'Unsupported file format' },
+    '文件解析失败': { zh: '文件解析失败', en: 'File parsing failed' },
+    '文件读取失败': { zh: '文件读取失败', en: 'File read failed' },
+    '文件获取失败': { zh: '文件获取失败', en: 'Failed to get file' },
+    'JSON格式错误': { zh: 'JSON格式错误', en: 'JSON format error' },
+
     // 解析结果
     '解析结果': { zh: '解析结果', en: 'Parse Result' },
     '编辑': { zh: '编辑', en: 'Edit' },
