@@ -93,27 +93,6 @@
   margin: 8px 0;
 }
 
-.file-load-section {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  font-size: 12px;
-  color: #666;
-}
-
-.file-support-info {
-  flex: 1;
-}
-
 /* 横向加载样式 */
 .horizontal-loading {
   display: flex !important;

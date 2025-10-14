@@ -56,31 +56,7 @@
             />
           </el-form-item>
 
-          <!-- 文件加载操作 -->
-          <div class="file-load-section">
-            <el-form-item :label="t('加载需求文件')">
-              <el-upload
-                ref="uploadRef"
-                :auto-upload="false"
-                :show-file-list="false"
-                accept=".txt,.md,.json"
-                :on-change="handleFileUpload"
-                :before-upload="beforeFileUpload"
-                style="width: 100%;"
-              >
-                <el-button type="primary" plain style="width: 100%;">
-                  📁 {{ t('加载需求文件') }}
-                </el-button>
-              </el-upload>
-              <div class="file-info">
-                <el-tooltip :content="t('支持 .txt, .md, .json 格式，最大5MB')" placement="top">
-                  <el-icon class="help-icon"><QuestionFilled /></el-icon>
-                </el-tooltip>
-                <span class="file-support-info">{{ t('支持文本、Markdown、JSON格式') }}</span>
-              </div>
-            </el-form-item>
-          </div>
-
+  
           <!-- 附加参数 -->
           <div class="additional-params">
             <el-form-item :label="t('测试类型')">
@@ -140,13 +116,27 @@
 
           <!-- 操作按钮 -->
           <div class="action-buttons">
-            <el-button type="primary" @click="parseRequirement" :loading="isParsing">
+            <el-upload
+              ref="uploadRef"
+              :auto-upload="false"
+              :show-file-list="false"
+              accept=".txt,.md,.json"
+              :on-change="handleFileUpload"
+              :before-upload="beforeFileUpload"
+              style="width: 100%; margin-bottom: 12px;"
+            >
+              <el-button type="primary" plain style="width: 100%;">
+                📁 {{ t('加载需求文件') }}
+              </el-button>
+            </el-upload>
+
+            <el-button type="primary" @click="parseRequirement" :loading="isParsing" style="width: 100%;">
               🔍 {{ t('解析需求') }}
             </el-button>
-            <el-button type="success" @click="generateTestCase" :loading="isGenerating" :disabled="!parsedRequirement">
+            <el-button type="success" @click="generateTestCase" :loading="isGenerating" :disabled="!parsedRequirement" style="width: 100%;">
               🚀 {{ t('生成测试用例') }}
             </el-button>
-            <el-button @click="resetForm">
+            <el-button @click="resetForm" style="width: 100%;">
               🔄 {{ t('重置') }}
             </el-button>
           </div>
@@ -317,7 +307,7 @@
               <div v-if="requirementData.description" v-html="highlightedRequirementContent"></div>
               <div v-else class="empty-content-hint">
                 <p>{{ t('📝 请输入需求描述...') }}</p>
-                <p style="font-size: 12px; color: #999;">{{ t('点击此处开始编辑，或使用左侧加载文件按钮导入需求') }}</p>
+                <p style="font-size: 12px; color: #999;">{{ t('点击此处开始编辑，或使用上方加载文件按钮导入需求') }}</p>
               </div>
             </div>
           </div>
