@@ -292,48 +292,91 @@
         <!-- 解析结果面板 -->
         <section class="parse-result-panel" v-if="parsedRequirement">
           <div class="panel-header">
-            <h3>🔍 {{ t('解析结果') }}
-              <span v-if="parsedRequirement" style="color: #409eff; font-size: 14px; font-weight: normal;">
-                {{ parsedRequirement.test_cases ? ` - ${t('多测试用例解析')}` : ` - ${parsedRequirement.name}` }}
+            <h3>🔍 {{ isEditingParsed ? `✏️ ${t('编辑解析结果')}` : t('解析结果') }}
+              <span v-if="isEditingParsed ? editedParsedRequirement : parsedRequirement" style="color: #409eff; font-size: 14px; font-weight: normal;">
+                {{ getDisplayTitle }}
               </span>
             </h3>
             <div class="panel-actions">
-              <el-button size="small" @click="editParsedRequirement">
-                ✏️ {{ t('编辑') }}
-              </el-button>
-              <el-button size="small" type="success" @click="regenerateTestCase">
-                🔄 {{ t('重新生成') }}
-              </el-button>
+              <template v-if="isEditingParsed">
+                <el-button size="small" type="success" @click="saveParsedRequirement">
+                  💾 {{ t('保存') }}
+                </el-button>
+                <el-button size="small" @click="cancelEditParsedRequirement">
+                  ❌ {{ t('取消') }}
+                </el-button>
+              </template>
+              <template v-else>
+                <el-button size="small" @click="editParsedRequirement">
+                  ✏️ {{ t('编辑') }}
+                </el-button>
+                <el-button size="small" type="success" @click="regenerateTestCase">
+                  🔄 {{ t('重新生成') }}
+                </el-button>
+              </template>
             </div>
           </div>
 
           <div class="parsed-content">
             <!-- 多测试用例解析结果 -->
-            <div v-if="parsedRequirement.test_cases" class="multiple-testcases-preview">
+            <div v-if="(isEditingParsed ? editedParsedRequirement : parsedRequirement)?.test_cases" class="multiple-testcases-preview">
               <div class="coverage-info">
                 <h5>{{ t('覆盖说明') }}</h5>
-                <p>{{ parsedRequirement.coverage_note }}</p>
+                <el-input
+                  v-if="isEditingParsed"
+                  v-model="editedParsedRequirement.coverage_note"
+                  type="textarea"
+                  :rows="2"
+                  :placeholder="t('请输入覆盖说明')"
+                />
+                <p v-else>{{ (isEditingParsed ? editedParsedRequirement : parsedRequirement)?.coverage_note }}</p>
               </div>
 
               <div class="testcases-preview">
-                <h5>{{ t('预览测试用例') }} ({{ parsedRequirement.test_cases.length }})</h5>
+                <h5>{{ t('预览测试用例') }} ({{ (isEditingParsed ? editedParsedRequirement : parsedRequirement)?.test_cases?.length || 0 }})</h5>
                 <div
-                  v-for="(testCase, index) in parsedRequirement.test_cases"
+                  v-for="(testCase, index) in (isEditingParsed ? editedParsedRequirement : parsedRequirement)?.test_cases || []"
                   :key="index"
                   class="testcase-preview-item"
                 >
                   <div class="testcase-preview-header">
-                    <strong>{{ testCase.name }}</strong>
+                    <el-input
+                      v-if="isEditingParsed"
+                      v-model="testCase.name"
+                      size="small"
+                      style="flex: 1; margin-right: 8px;"
+                    />
+                    <strong v-else>{{ testCase.name }}</strong>
                     <div class="testcase-preview-badges">
-                      <el-tag :type="getPriorityType(testCase.priority)" size="small">
+                      <el-select v-if="isEditingParsed" v-model="testCase.priority" size="small" style="width: 80px;">
+                        <el-option :label="t('高')" value="high" />
+                        <el-option :label="t('中')" value="medium" />
+                        <el-option :label="t('低')" value="low" />
+                      </el-select>
+                      <el-tag v-else :type="getPriorityType(testCase.priority)" size="small">
                         {{ t(testCase.priority) }}
                       </el-tag>
-                      <el-tag v-if="testCase.coverage_aspect" type="info" size="small">
+                      <el-input
+                        v-if="isEditingParsed"
+                        v-model="testCase.coverage_aspect"
+                        size="small"
+                        style="width: 120px; margin-left: 4px;"
+                        :placeholder="t('覆盖方面')"
+                      />
+                      <el-tag v-else-if="testCase.coverage_aspect" type="info" size="small">
                         {{ testCase.coverage_aspect }}
                       </el-tag>
                     </div>
                   </div>
-                  <p class="testcase-preview-objective">{{ testCase.objective }}</p>
+                  <el-input
+                    v-if="isEditingParsed"
+                    v-model="testCase.objective"
+                    type="textarea"
+                    :rows="2"
+                    size="small"
+                    class="testcase-preview-objective-edit"
+                  />
+                  <p v-else class="testcase-preview-objective">{{ testCase.objective }}</p>
                   <div class="testcase-preview-meta">
                     <span>{{ testCase.steps?.length || 0 }} {{ t('个步骤') }}</span>
                   </div>
@@ -343,15 +386,18 @@
 
             <!-- 单个测试用例解析结果 -->
             <div v-else class="single-testcase-preview">
-              <el-form :model="parsedRequirement" label-width="120px">
+              <el-form :model="isEditingParsed ? editedParsedRequirement : parsedRequirement || {}" label-width="120px">
                 <el-form-item :label="t('测试用例名称')">
-                  <el-input v-model="parsedRequirement.name" />
+                  <el-input v-if="isEditingParsed" v-model="editedParsedRequirement.name" />
+                  <span v-else>{{ (isEditingParsed ? editedParsedRequirement : parsedRequirement)?.name }}</span>
                 </el-form-item>
                 <el-form-item :label="t('测试目标')">
-                  <el-input v-model="parsedRequirement.objective" type="textarea" :rows="2" />
+                  <el-input v-if="isEditingParsed" v-model="editedParsedRequirement.objective" type="textarea" :rows="2" />
+                  <span v-else>{{ (isEditingParsed ? editedParsedRequirement : parsedRequirement)?.objective }}</span>
                 </el-form-item>
                 <el-form-item :label="t('前置条件')">
-                  <el-input v-model="parsedRequirement.preconditions" type="textarea" :rows="2" />
+                  <el-input v-if="isEditingParsed" v-model="editedParsedRequirement.preconditions" type="textarea" :rows="2" />
+                  <span v-else>{{ (isEditingParsed ? editedParsedRequirement : parsedRequirement)?.preconditions }}</span>
                 </el-form-item>
               </el-form>
 
@@ -360,35 +406,47 @@
                 <h4>{{ t('测试步骤') }}</h4>
                 <div class="steps-list">
                   <div
-                    v-for="(step, index) in parsedRequirement.steps"
+                    v-for="(step, index) in (isEditingParsed ? editedParsedRequirement : parsedRequirement)?.steps || []"
                     :key="index"
                     class="step-item"
                   >
                     <div class="step-header">
                       <span class="step-number">{{ index + 1 }}</span>
-                      <el-button size="small" type="danger" @click="removeStep(index)">
+                      <el-button v-if="isEditingParsed" size="small" type="danger" @click="removeStep(index)">
                         🗑️
                       </el-button>
                     </div>
                     <el-input
+                      v-if="isEditingParsed"
                       v-model="step.test_step"
                       :placeholder="t('测试步骤')"
                       class="step-input"
                     />
+                    <div v-else class="step-display">
+                      <strong>{{ step.test_step }}</strong>
+                    </div>
                     <el-input
+                      v-if="isEditingParsed"
                       v-model="step.description"
                       :placeholder="t('详细描述')"
                       type="textarea"
                       :rows="2"
                       class="step-description"
                     />
+                    <div v-else class="step-display">
+                      {{ step.description }}
+                    </div>
                     <el-input
+                      v-if="isEditingParsed"
                       v-model="step.expected_result"
                       :placeholder="t('预期结果')"
                       class="step-expected"
                     />
+                    <div v-else class="step-display">
+                      <em>{{ step.expected_result }}</em>
+                    </div>
                   </div>
-                  <el-button @click="addStep" type="primary" plain>
+                  <el-button v-if="isEditingParsed" @click="addStep" type="primary" plain>
                     ➕ {{ t('添加步骤') }}
                   </el-button>
                 </div>
@@ -514,16 +572,31 @@ interface RequirementData {
 }
 
 interface ParsedRequirement {
-  id: string
-  name: string
-  objective: string
-  preconditions: string
-  steps: Array<{
+  id?: string
+  name?: string
+  objective?: string
+  preconditions?: string
+  steps?: Array<{
     test_step: string
     description: string
     expected_result: string
     timestamp: string
   }>
+  test_cases?: Array<{
+    name: string
+    objective: string
+    preconditions: string
+    test_type: string
+    priority: string
+    coverage_aspect?: string
+    steps: Array<{
+      test_step: string
+      description: string
+      expected_result: string
+    }>
+  }>
+  requirement_id?: string
+  coverage_note?: string
 }
 
 interface GeneratedTestCase {
@@ -565,6 +638,8 @@ const generatedTestCases = ref<GeneratedTestCase[]>([])
 const testCasesGroups = ref<TestCasesGroup[]>([])
 const uploadRef = ref<any>(null)
 const isUploading = ref<boolean>(false)
+const isEditingParsed = ref<boolean>(false)
+const editedParsedRequirement = ref<ParsedRequirement | null>(null)
 
 // 表单数据
 const requirementData = reactive<RequirementData>({
@@ -1097,7 +1172,67 @@ const resetForm = () => {
 }
 
 const editParsedRequirement = () => {
-  ElMessage.info(t('编辑功能开发中'))
+  if (!parsedRequirement.value) {
+    ElMessage.warning(t('没有可编辑的解析结果'))
+    return
+  }
+
+  // 深拷贝解析结果用于编辑
+  editedParsedRequirement.value = JSON.parse(JSON.stringify(parsedRequirement.value))
+  isEditingParsed.value = true
+}
+
+const saveParsedRequirement = () => {
+  if (!editedParsedRequirement.value) {
+    ElMessage.error(t('没有可保存的修改'))
+    return
+  }
+
+  // 验证编辑后的内容
+  if (editedParsedRequirement.value.test_cases) {
+    // 多测试用例模式验证
+    if (!editedParsedRequirement.value.test_cases || editedParsedRequirement.value.test_cases.length === 0) {
+      ElMessage.error(t('至少需要一个测试用例'))
+      return
+    }
+
+    // 验证每个测试用例
+    for (const testCase of editedParsedRequirement.value.test_cases) {
+      if (!testCase.name || !testCase.objective) {
+        ElMessage.error(t('测试用例名称和目标不能为空'))
+        return
+      }
+      if (!testCase.steps || testCase.steps.length === 0) {
+        ElMessage.error(t('每个测试用例至少需要一个测试步骤'))
+        return
+      }
+    }
+  } else {
+    // 单个测试用例模式验证
+    if (!editedParsedRequirement.value.name || !editedParsedRequirement.value.objective) {
+      ElMessage.error(t('测试用例名称和目标不能为空'))
+      return
+    }
+
+    // 验证步骤
+    if (!editedParsedRequirement.value.steps || editedParsedRequirement.value.steps.length === 0) {
+      ElMessage.error(t('至少需要一个测试步骤'))
+      return
+    }
+  }
+
+  // 保存编辑结果
+  parsedRequirement.value = editedParsedRequirement.value
+  isEditingParsed.value = false
+  editedParsedRequirement.value = null
+
+  ElMessage.success(t('解析结果已保存'))
+}
+
+const cancelEditParsedRequirement = () => {
+  isEditingParsed.value = false
+  editedParsedRequirement.value = null
+  ElMessage.info(t('已取消编辑'))
 }
 
 const regenerateTestCase = async () => {
@@ -1107,8 +1242,11 @@ const regenerateTestCase = async () => {
 }
 
 const addStep = () => {
-  if (parsedRequirement.value) {
-    parsedRequirement.value.steps.push({
+  if (isEditingParsed.value && editedParsedRequirement.value) {
+    if (!editedParsedRequirement.value.steps) {
+      editedParsedRequirement.value.steps = []
+    }
+    editedParsedRequirement.value.steps.push({
       test_step: '',
       description: '',
       expected_result: '',
@@ -1118,8 +1256,8 @@ const addStep = () => {
 }
 
 const removeStep = (index: number) => {
-  if (parsedRequirement.value && parsedRequirement.value.steps.length > 1) {
-    parsedRequirement.value.steps.splice(index, 1)
+  if (isEditingParsed.value && editedParsedRequirement.value && editedParsedRequirement.value.steps && editedParsedRequirement.value.steps.length > 1) {
+    editedParsedRequirement.value.steps.splice(index, 1)
   }
 }
 
@@ -1311,6 +1449,18 @@ const singleTestCases = computed(() => {
 // 是否有单个测试用例
 const hasSingleTestCases = computed(() => {
   return singleTestCases.value.length > 0
+})
+
+// 获取解析结果显示标题
+const getDisplayTitle = computed(() => {
+  const current = isEditingParsed.value ? editedParsedRequirement.value : parsedRequirement.value
+  if (!current) return ''
+
+  if (current.test_cases) {
+    return ` - ${t('多测试用例解析')}`
+  } else {
+    return ` - ${current.name || ''}`
+  }
 })
 
 // 文件上传相关方法

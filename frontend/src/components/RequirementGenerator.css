@@ -437,6 +437,35 @@
   color: #999;
 }
 
+/* 编辑模式样式 */
+.testcase-preview-objective-edit {
+  margin: 8px 0;
+}
+
+.step-display {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #409eff;
+}
+
+.step-display strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.step-display em {
+  color: #666;
+  font-style: italic;
+}
+
+/* 编辑状态下的面板样式 */
+.parse-result-panel:has(.el-form) {
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
 .testcase-description {
   color: #6c757d;
   font-size: 13px;
