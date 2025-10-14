@@ -88,7 +88,7 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 1. 直接返回JSON格式，不要包含任何其他文字
 2. JSON结构必须包含：name, objective, preconditions, steps
 3. steps数组必须包含3-8个测试步骤
-4. 每个步骤必须包含：test_step, description, expected_result, timestamp
+4. 每个步骤必须包含：test_step, description, expected_result
 5. 测试步骤要逻辑清晰，可执行
 6. 预期结果要明确具体"""
 
@@ -109,8 +109,7 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
         {{
             "test_step": "测试步骤名称",
             "description": "详细的操作描述",
-            "expected_result": "明确的预期结果",
-            "timestamp": "{datetime.now().strftime('%Y-%m-%d')}"
+            "expected_result": "明确的预期结果"
         }}
     ]
 }}
@@ -169,13 +168,10 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 
         # 确保每个步骤都有必需字段
         for i, step in enumerate(result['steps']):
-            step_fields = ['test_step', 'description', 'expected_result', 'timestamp']
+            step_fields = ['test_step', 'description', 'expected_result']
             for field in step_fields:
                 if field not in step:
-                    if field == 'timestamp':
-                        step[field] = datetime.now().strftime('%Y-%m-%d')
-                    else:
-                        raise Exception(f"步骤{i+1}缺少必需字段: {field}")
+                    raise Exception(f"步骤{i+1}缺少必需字段: {field}")
 
         return result
 
@@ -222,11 +218,7 @@ async def parse_requirement(request: ParseRequirementRequest):
         requirement_id = generate_test_case_id()
         parsed_data["id"] = requirement_id
 
-        # 确保每个步骤都有timestamp
-        for step in parsed_data["steps"]:
-            if "timestamp" not in step:
-                step["timestamp"] = datetime.now().strftime("%Y-%m-%d")
-
+        
         # 存储解析结果
         session_data.parsed_requirements[requirement_id] = parsed_data
 
