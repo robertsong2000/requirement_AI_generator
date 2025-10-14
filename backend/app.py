@@ -71,7 +71,7 @@ def generate_test_case_id() -> str:
     return f"TC_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
 def parse_requirement_with_llm(title: str, description: str, test_type: str, priority: str) -> Dict[str, Any]:
-    """使用OpenAI API解析需求"""
+    """使用OpenAI兼容API解析需求"""
 
     # 检查环境变量
     api_key = os.getenv('OPENAI_API_KEY')
@@ -79,6 +79,7 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
         raise Exception("未配置OPENAI_API_KEY环境变量，请在.env文件中设置API密钥")
 
     base_url = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+    model_name = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
 
     # 构建提示词
     system_prompt = """你是一个专业的测试用例设计专家。请将用户的需求描述转换为结构化的测试用例格式。
@@ -129,7 +130,7 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 
         # 调用API
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=model_name,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
