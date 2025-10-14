@@ -89,11 +89,39 @@
             </el-form-item>
 
             <el-form-item :label="t('预估复杂度')">
-              <el-select v-model="requirementData.complexity" :placeholder="t('选择复杂度')">
-                <el-option :label="t('简单')" value="simple" />
-                <el-option :label="t('中等')" value="medium" />
-                <el-option :label="t('复杂')" value="complex" />
-              </el-select>
+              <el-tooltip
+                placement="top"
+                :show-after="500"
+                :enterable="false"
+              >
+                <template #content>
+                  <div style="max-width: 300px; line-height: 1.6;">
+                    <div v-if="requirementData.complexity === 'simple'">
+                      <strong>{{ t('简单复杂度') }}</strong><br>
+                      {{ t('生成单个测试用例，包含3-4个核心测试步骤，覆盖主要功能点') }}
+                    </div>
+                    <div v-else-if="requirementData.complexity === 'medium'">
+                      <strong>{{ t('中等复杂度') }}</strong><br>
+                      {{ t('生成单个测试用例，包含5-6个测试步骤，包含正常流程和基本异常场景') }}
+                    </div>
+                    <div v-else-if="requirementData.complexity === 'complex'">
+                      <strong>{{ t('复杂复杂度') }}</strong><br>
+                      {{ t('生成2-4个相关测试用例，分别关注基本功能验证、异常场景处理、边界条件测试等') }}
+                    </div>
+                    <div v-else>
+                      <strong>{{ t('复杂度说明') }}</strong><br>
+                      • {{ t('简单') }}: {{ t('单个测试用例，3-4步') }}<br>
+                      • {{ t('中等') }}: {{ t('单个测试用例，5-6步') }}<br>
+                      • {{ t('复杂') }}: {{ t('多个测试用例，分组覆盖') }}
+                    </div>
+                  </div>
+                </template>
+                <el-select v-model="requirementData.complexity" :placeholder="t('选择复杂度')">
+                  <el-option :label="t('简单')" value="simple" />
+                  <el-option :label="t('中等')" value="medium" />
+                  <el-option :label="t('复杂')" value="complex" />
+                </el-select>
+              </el-tooltip>
             </el-form-item>
           </div>
 
@@ -113,27 +141,86 @@
 
         <!-- 生成的测试用例列表 -->
         <section class="testcase-list-panel" v-if="generatedTestCases.length > 0">
-          <h3>📋 {{ t('生成的测试用例') }}</h3>
-          <div class="testcase-list">
-            <el-card
-              v-for="(testCase, index) in generatedTestCases"
-              :key="testCase.id"
-              :class="['testcase-item', { selected: selectedTestCase?.id === testCase.id }]"
-              @click="selectTestCase(testCase)"
-              shadow="hover"
+          <h3>📋 {{ t('生成的测试用例') }}
+            <span style="font-size: 14px; color: #666; font-weight: normal;">
+              ({{ generatedTestCases.length }} {{ t('个') }})
+            </span>
+          </h3>
+
+          <!-- 测试用例分组显示 -->
+          <div v-if="testCasesGroups.length > 0" class="testcase-groups">
+            <div
+              v-for="group in testCasesGroups"
+              :key="group.requirement_id"
+              class="testcase-group"
             >
-              <div class="testcase-header">
-                <strong>{{ testCase.name }}</strong>
-                <el-tag :type="getPriorityType(testCase.priority)" size="small">
-                  {{ t(testCase.priority) }}
+              <div class="group-header">
+                <el-tag type="success" size="small">
+                  📦 {{ t('需求组') }}
                 </el-tag>
+                <span class="group-info">{{ group.test_cases.length }} {{ t('个测试用例') }}</span>
+                <el-tooltip :content="group.coverage_note" placement="top">
+                  <el-icon class="info-icon"><InfoFilled /></el-icon>
+                </el-tooltip>
               </div>
-              <p class="testcase-description">{{ testCase.objective }}</p>
-              <div class="testcase-meta">
-                <span class="testcase-steps">{{ testCase.steps?.length || 0 }} {{ t('个步骤') }}</span>
-                <span class="testcase-time">{{ formatTime(testCase.created_at) }}</span>
+              <div class="group-testcases">
+                <el-card
+                  v-for="testCase in group.test_cases"
+                  :key="testCase.id"
+                  :class="['testcase-item', { selected: selectedTestCase?.id === testCase.id }]"
+                  @click="selectTestCase(testCase)"
+                  shadow="hover"
+                >
+                  <div class="testcase-header">
+                    <strong>{{ testCase.name }}</strong>
+                    <div class="testcase-badges">
+                      <el-tag :type="getPriorityType(testCase.priority)" size="small">
+                        {{ t(testCase.priority) }}
+                      </el-tag>
+                      <el-tag v-if="testCase.coverage_aspect" type="info" size="small">
+                        {{ testCase.coverage_aspect }}
+                      </el-tag>
+                    </div>
+                  </div>
+                  <p class="testcase-description">{{ testCase.objective }}</p>
+                  <div class="testcase-meta">
+                    <span class="testcase-steps">{{ testCase.steps?.length || 0 }} {{ t('个步骤') }}</span>
+                    <span class="testcase-time">{{ formatTime(testCase.created_at) }}</span>
+                  </div>
+                </el-card>
               </div>
-            </el-card>
+            </div>
+          </div>
+
+          <!-- 单个测试用例显示 -->
+          <div v-if="hasSingleTestCases" class="single-testcases">
+            <h4 v-if="testCasesGroups.length > 0">{{ t('其他测试用例') }}</h4>
+            <div class="testcase-list">
+              <el-card
+                v-for="testCase in singleTestCases"
+                :key="testCase.id"
+                :class="['testcase-item', { selected: selectedTestCase?.id === testCase.id }]"
+                @click="selectTestCase(testCase)"
+                shadow="hover"
+              >
+                <div class="testcase-header">
+                  <strong>{{ testCase.name }}</strong>
+                  <div class="testcase-badges">
+                    <el-tag :type="getPriorityType(testCase.priority)" size="small">
+                      {{ t(testCase.priority) }}
+                    </el-tag>
+                    <el-tag v-if="testCase.coverage_aspect" type="info" size="small">
+                      {{ testCase.coverage_aspect }}
+                    </el-tag>
+                  </div>
+                </div>
+                <p class="testcase-description">{{ testCase.objective }}</p>
+                <div class="testcase-meta">
+                  <span class="testcase-steps">{{ testCase.steps?.length || 0 }} {{ t('个步骤') }}</span>
+                  <span class="testcase-time">{{ formatTime(testCase.created_at) }}</span>
+                </div>
+              </el-card>
+            </div>
           </div>
         </section>
       </aside>
@@ -188,7 +275,7 @@
           <div class="panel-header">
             <h3>🔍 {{ t('解析结果') }}
               <span v-if="parsedRequirement" style="color: #409eff; font-size: 14px; font-weight: normal;">
-                - {{ parsedRequirement.name }}
+                {{ parsedRequirement.test_cases ? ` - ${t('多测试用例解析')}` : ` - ${parsedRequirement.name}` }}
               </span>
             </h3>
             <div class="panel-actions">
@@ -202,54 +289,90 @@
           </div>
 
           <div class="parsed-content">
-            <el-form :model="parsedRequirement" label-width="120px">
-              <el-form-item :label="t('测试用例名称')">
-                <el-input v-model="parsedRequirement.name" />
-              </el-form-item>
-              <el-form-item :label="t('测试目标')">
-                <el-input v-model="parsedRequirement.objective" type="textarea" :rows="2" />
-              </el-form-item>
-              <el-form-item :label="t('前置条件')">
-                <el-input v-model="parsedRequirement.preconditions" type="textarea" :rows="2" />
-              </el-form-item>
-            </el-form>
+            <!-- 多测试用例解析结果 -->
+            <div v-if="parsedRequirement.test_cases" class="multiple-testcases-preview">
+              <div class="coverage-info">
+                <h5>{{ t('覆盖说明') }}</h5>
+                <p>{{ parsedRequirement.coverage_note }}</p>
+              </div>
 
-            <!-- 测试步骤 -->
-            <div class="steps-section">
-              <h4>{{ t('测试步骤') }}</h4>
-              <div class="steps-list">
+              <div class="testcases-preview">
+                <h5>{{ t('预览测试用例') }} ({{ parsedRequirement.test_cases.length }})</h5>
                 <div
-                  v-for="(step, index) in parsedRequirement.steps"
+                  v-for="(testCase, index) in parsedRequirement.test_cases"
                   :key="index"
-                  class="step-item"
+                  class="testcase-preview-item"
                 >
-                  <div class="step-header">
-                    <span class="step-number">{{ index + 1 }}</span>
-                    <el-button size="small" type="danger" @click="removeStep(index)">
-                      🗑️
-                    </el-button>
+                  <div class="testcase-preview-header">
+                    <strong>{{ testCase.name }}</strong>
+                    <div class="testcase-preview-badges">
+                      <el-tag :type="getPriorityType(testCase.priority)" size="small">
+                        {{ t(testCase.priority) }}
+                      </el-tag>
+                      <el-tag v-if="testCase.coverage_aspect" type="info" size="small">
+                        {{ testCase.coverage_aspect }}
+                      </el-tag>
+                    </div>
                   </div>
-                  <el-input
-                    v-model="step.test_step"
-                    :placeholder="t('测试步骤')"
-                    class="step-input"
-                  />
-                  <el-input
-                    v-model="step.description"
-                    :placeholder="t('详细描述')"
-                    type="textarea"
-                    :rows="2"
-                    class="step-description"
-                  />
-                  <el-input
-                    v-model="step.expected_result"
-                    :placeholder="t('预期结果')"
-                    class="step-expected"
-                  />
+                  <p class="testcase-preview-objective">{{ testCase.objective }}</p>
+                  <div class="testcase-preview-meta">
+                    <span>{{ testCase.steps?.length || 0 }} {{ t('个步骤') }}</span>
+                  </div>
                 </div>
-                <el-button @click="addStep" type="primary" plain>
-                  ➕ {{ t('添加步骤') }}
-                </el-button>
+              </div>
+            </div>
+
+            <!-- 单个测试用例解析结果 -->
+            <div v-else class="single-testcase-preview">
+              <el-form :model="parsedRequirement" label-width="120px">
+                <el-form-item :label="t('测试用例名称')">
+                  <el-input v-model="parsedRequirement.name" />
+                </el-form-item>
+                <el-form-item :label="t('测试目标')">
+                  <el-input v-model="parsedRequirement.objective" type="textarea" :rows="2" />
+                </el-form-item>
+                <el-form-item :label="t('前置条件')">
+                  <el-input v-model="parsedRequirement.preconditions" type="textarea" :rows="2" />
+                </el-form-item>
+              </el-form>
+
+              <!-- 测试步骤 -->
+              <div class="steps-section">
+                <h4>{{ t('测试步骤') }}</h4>
+                <div class="steps-list">
+                  <div
+                    v-for="(step, index) in parsedRequirement.steps"
+                    :key="index"
+                    class="step-item"
+                  >
+                    <div class="step-header">
+                      <span class="step-number">{{ index + 1 }}</span>
+                      <el-button size="small" type="danger" @click="removeStep(index)">
+                        🗑️
+                      </el-button>
+                    </div>
+                    <el-input
+                      v-model="step.test_step"
+                      :placeholder="t('测试步骤')"
+                      class="step-input"
+                    />
+                    <el-input
+                      v-model="step.description"
+                      :placeholder="t('详细描述')"
+                      type="textarea"
+                      :rows="2"
+                      class="step-description"
+                    />
+                    <el-input
+                      v-model="step.expected_result"
+                      :placeholder="t('预期结果')"
+                      class="step-expected"
+                    />
+                  </div>
+                  <el-button @click="addStep" type="primary" plain>
+                    ➕ {{ t('添加步骤') }}
+                  </el-button>
+                </div>
               </div>
             </div>
           </div>
@@ -333,6 +456,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { InfoFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
 import 'element-plus/dist/index.css'
 import 'highlight.js/styles/github.css'
@@ -389,12 +513,22 @@ interface GeneratedTestCase {
   objective: string
   preconditions: string
   priority: string
+  test_type: string
+  coverage_aspect?: string
+  requirement_id?: string
   steps: Array<{
     test_step: string
     description: string
     expected_result: string
     timestamp: string
   }>
+  created_at: string
+}
+
+interface TestCasesGroup {
+  requirement_id: string
+  coverage_note: string
+  test_cases: GeneratedTestCase[]
   created_at: string
 }
 
@@ -409,6 +543,7 @@ const errorMessage = ref<string>('')
 const parsedRequirement = ref<ParsedRequirement | null>(null)
 const selectedTestCase = ref<GeneratedTestCase | null>(null)
 const generatedTestCases = ref<GeneratedTestCase[]>([])
+const testCasesGroups = ref<TestCasesGroup[]>([])
 
 // 表单数据
 const requirementData = reactive<RequirementData>({
@@ -689,7 +824,18 @@ const parseRequirement = async () => {
     }
 
     parsedRequirement.value = response.data.parsed_requirement
-    ElMessage.success(t('需求解析完成，共提取 ') + parsedRequirement.value.steps.length + t('个测试步骤'))
+
+    // 计算测试步骤数量（支持单个和多个测试用例格式）
+    let totalSteps = 0
+    if (parsedRequirement.value.test_cases) {
+      // 多测试用例格式
+      totalSteps = parsedRequirement.value.test_cases.reduce((sum: number, tc: any) => sum + (tc.steps?.length || 0), 0)
+      ElMessage.success(t('需求解析完成，共生成 ') + parsedRequirement.value.test_cases.length + t('个测试用例，') + totalSteps + t('个测试步骤'))
+    } else {
+      // 单个测试用例格式
+      totalSteps = parsedRequirement.value.steps?.length || 0
+      ElMessage.success(t('需求解析完成，共提取 ') + totalSteps + t('个测试步骤'))
+    }
 
   } catch (error: any) {
     console.error(t('解析失败: ') + error)
@@ -721,14 +867,42 @@ const generateTestCase = async () => {
       return
     }
 
-    const newTestCase: GeneratedTestCase = {
-      ...response.data.test_case,
-      created_at: new Date().toISOString()
-    }
+    if (response.data.type === 'multiple') {
+      // 处理多个测试用例
+      const testCasesGroup: TestCasesGroup = {
+        requirement_id: response.data.requirement_id,
+        coverage_note: response.data.coverage_note,
+        test_cases: response.data.test_cases.map((tc: any) => ({
+          ...tc,
+          created_at: new Date().toISOString()
+        })),
+        created_at: new Date().toISOString()
+      }
 
-    generatedTestCases.value.push(newTestCase)
-    selectedTestCase.value = newTestCase
-    ElMessage.success(t('测试用例生成完成: ') + newTestCase.name)
+      testCasesGroups.value.push(testCasesGroup)
+
+      // 将所有测试用例添加到总列表中
+      response.data.test_cases.forEach((tc: any) => {
+        const newTestCase: GeneratedTestCase = {
+          ...tc,
+          created_at: new Date().toISOString()
+        }
+        generatedTestCases.value.push(newTestCase)
+      })
+
+      selectedTestCase.value = response.data.test_cases[0]
+      ElMessage.success(t('成功生成') + response.data.test_cases.length + t('个测试用例'))
+    } else {
+      // 处理单个测试用例
+      const newTestCase: GeneratedTestCase = {
+        ...response.data.test_case,
+        created_at: new Date().toISOString()
+      }
+
+      generatedTestCases.value.push(newTestCase)
+      selectedTestCase.value = newTestCase
+      ElMessage.success(t('测试用例生成完成: ') + newTestCase.name)
+    }
 
   } catch (error: any) {
     console.error(t('生成失败: ') + error)
@@ -752,6 +926,8 @@ const resetForm = () => {
   selectedTemplate.value = ''
   parsedRequirement.value = null
   selectedTestCase.value = null
+  generatedTestCases.value = []
+  testCasesGroups.value = []
   errorMessage.value = ''
   ElMessage.success(t('表单已重置'))
 }
@@ -953,6 +1129,24 @@ const requirementStats = computed(() => {
     characters: requirementData.description.length,
     lines: requirementData.description.split('\n').length
   }
+})
+
+// 获取不属于任何分组的单个测试用例
+const singleTestCases = computed(() => {
+  const groupedTestCaseIds = new Set<string>()
+
+  testCasesGroups.value.forEach(group => {
+    group.test_cases.forEach(tc => {
+      groupedTestCaseIds.add(tc.id)
+    })
+  })
+
+  return generatedTestCases.value.filter(tc => !groupedTestCaseIds.has(tc.id))
+})
+
+// 是否有单个测试用例
+const hasSingleTestCases = computed(() => {
+  return singleTestCases.value.length > 0
 })
 </script>
 

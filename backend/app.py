@@ -63,8 +63,16 @@ class TestCase(BaseModel):
     objective: str
     preconditions: str
     priority: str
+    test_type: str
+    coverage_aspect: Optional[str] = None
     steps: List[Dict[str, str]]
     created_at: str
+    requirement_id: Optional[str] = None
+
+class MultipleTestCases(BaseModel):
+    test_cases: List[TestCase]
+    requirement_id: str
+    coverage_note: str
 
 def generate_test_case_id() -> str:
     """生成测试用例ID"""
@@ -113,11 +121,15 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 优先级: {priority}
 预估复杂度: {complexity}
 
-请按照以下JSON格式返回：
+根据需求的复杂程度，请选择合适的格式返回：
+
+对于简单或中等复杂度需求，返回单个测试用例：
 {{
     "name": "基于需求标题的测试用例名称",
     "objective": "明确具体的测试目标",
-    "preconditions": "测试环境准备要求和前置条件（注意：必须是字符串格式，不要返回数组）",
+    "preconditions": "测试环境准备要求和前置条件（必须是字符串格式）",
+    "test_type": "{test_type}",
+    "priority": "{priority}",
     "steps": [
         {{
             "test_step": "测试步骤名称",
@@ -125,6 +137,32 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
             "expected_result": "明确的预期结果"
         }}
     ]
+}}
+
+对于复杂需求，返回多个相关测试用例：
+{{
+    "test_cases": [
+        {{
+            "name": "具体测试用例名称1",
+            "objective": "该测试用例的具体目标",
+            "preconditions": "前置条件",
+            "test_type": "{test_type}",
+            "priority": "{priority}",
+            "coverage_aspect": "覆盖方面描述",
+            "steps": [步骤数组]
+        }},
+        {{
+            "name": "具体测试用例名称2",
+            "objective": "该测试用例的具体目标",
+            "preconditions": "前置条件",
+            "test_type": "{test_type}",
+            "priority": "medium",
+            "coverage_aspect": "覆盖方面描述",
+            "steps": [步骤数组]
+        }}
+    ],
+    "requirement_id": "REQ_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+    "coverage_note": "这些测试用例如何覆盖需求的说明"
 }}
 
 需求内容：
@@ -171,27 +209,62 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
             except json.JSONDecodeError:
                 raise Exception(f"LLM返回的不是有效的JSON格式: {content}")
 
-        # 验证必需字段
-        required_fields = ['name', 'objective', 'preconditions', 'steps']
-        for field in required_fields:
-            if field not in result:
-                raise Exception(f"LLM返回结果缺少必需字段: {field}")
+        # 验证返回格式 - 支持单个和多个测试用例
+        if 'test_cases' in result:
+            # 多测试用例格式验证
+            multi_required_fields = ['test_cases', 'requirement_id', 'coverage_note']
+            for field in multi_required_fields:
+                if field not in result:
+                    raise Exception(f"LLM返回结果缺少必需字段: {field}")
 
-        # 确保preconditions是字符串类型
-        if isinstance(result['preconditions'], list):
-            result['preconditions'] = "; ".join(str(item) for item in result['preconditions'])
-        elif not isinstance(result['preconditions'], str):
-            result['preconditions'] = str(result['preconditions'])
+            if not isinstance(result['test_cases'], list) or len(result['test_cases']) == 0:
+                raise Exception("LLM返回的test_cases字段为空或格式错误")
 
-        if not isinstance(result['steps'], list) or len(result['steps']) == 0:
-            raise Exception("LLM返回的steps字段为空或格式错误")
+            # 验证每个测试用例
+            for i, test_case in enumerate(result['test_cases']):
+                single_required_fields = ['name', 'objective', 'preconditions', 'steps', 'test_type', 'priority']
+                for field in single_required_fields:
+                    if field not in test_case:
+                        raise Exception(f"测试用例{i+1}缺少必需字段: {field}")
 
-        # 确保每个步骤都有必需字段
-        for i, step in enumerate(result['steps']):
-            step_fields = ['test_step', 'description', 'expected_result']
-            for field in step_fields:
-                if field not in step:
-                    raise Exception(f"步骤{i+1}缺少必需字段: {field}")
+                # 验证步骤
+                if not isinstance(test_case['steps'], list) or len(test_case['steps']) == 0:
+                    raise Exception(f"测试用例{i+1}的steps字段为空或格式错误")
+
+                for j, step in enumerate(test_case['steps']):
+                    step_fields = ['test_step', 'description', 'expected_result']
+                    for field in step_fields:
+                        if field not in step:
+                            raise Exception(f"测试用例{i+1}步骤{j+1}缺少必需字段: {field}")
+
+                # 确保preconditions是字符串类型
+                if isinstance(test_case['preconditions'], list):
+                    test_case['preconditions'] = "; ".join(str(item) for item in test_case['preconditions'])
+                elif not isinstance(test_case['preconditions'], str):
+                    test_case['preconditions'] = str(test_case['preconditions'])
+
+        else:
+            # 单个测试用例格式验证
+            required_fields = ['name', 'objective', 'preconditions', 'steps']
+            for field in required_fields:
+                if field not in result:
+                    raise Exception(f"LLM返回结果缺少必需字段: {field}")
+
+            # 确保preconditions是字符串类型
+            if isinstance(result['preconditions'], list):
+                result['preconditions'] = "; ".join(str(item) for item in result['preconditions'])
+            elif not isinstance(result['preconditions'], str):
+                result['preconditions'] = str(result['preconditions'])
+
+            if not isinstance(result['steps'], list) or len(result['steps']) == 0:
+                raise Exception("LLM返回的steps字段为空或格式错误")
+
+            # 确保每个步骤都有必需字段
+            for i, step in enumerate(result['steps']):
+                step_fields = ['test_step', 'description', 'expected_result']
+                for field in step_fields:
+                    if field not in step:
+                        raise Exception(f"步骤{i+1}缺少必需字段: {field}")
 
         return result
 
@@ -253,7 +326,7 @@ async def parse_requirement(request: ParseRequirementRequest):
 
 @app.post("/generate-testcase")
 async def generate_testcase(request: GenerateTestCaseRequest):
-    """生成测试用例"""
+    """生成测试用例（支持单个和多个测试用例）"""
     try:
         # 获取会话
         if request.session_id not in store:
@@ -264,8 +337,56 @@ async def generate_testcase(request: GenerateTestCaseRequest):
         # 从解析的需求生成测试用例
         parsed_requirement = request.parsed_requirement
 
+        # 检查是否是多测试用例格式
+        if "test_cases" in parsed_requirement:
+            # 处理多个测试用例
+            return await generate_multiple_testcases(parsed_requirement, session_data)
+        else:
+            # 处理单个测试用例
+            return await generate_single_testcase(parsed_requirement, session_data)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"测试用例生成失败: {str(e)}")
+
+async def generate_single_testcase(parsed_requirement: Dict[str, Any], session_data: SessionData):
+    """生成单个测试用例"""
+    # 确保preconditions是字符串类型
+    preconditions_value = parsed_requirement.get("preconditions", "")
+    if isinstance(preconditions_value, list):
+        preconditions_value = "; ".join(str(item) for item in preconditions_value)
+    elif not isinstance(preconditions_value, str):
+        preconditions_value = str(preconditions_value)
+
+    # 创建测试用例
+    testcase = TestCase(
+        id=parsed_requirement.get("id", generate_test_case_id()),
+        name=parsed_requirement.get("name", "未命名测试用例"),
+        objective=parsed_requirement.get("objective", ""),
+        preconditions=preconditions_value,
+        priority=parsed_requirement.get("priority", "medium"),
+        test_type=parsed_requirement.get("test_type", "functional"),
+        coverage_aspect=parsed_requirement.get("coverage_aspect"),
+        steps=parsed_requirement.get("steps", []),
+        created_at=datetime.now().isoformat()
+    )
+
+    # 存储测试用例
+    session_data.generated_testcases[testcase.id] = testcase.dict()
+
+    return {
+        "test_case": testcase.dict(),
+        "message": "测试用例生成成功",
+        "type": "single"
+    }
+
+async def generate_multiple_testcases(parsed_requirement: Dict[str, Any], session_data: SessionData):
+    """生成多个测试用例"""
+    test_cases_data = []
+    requirement_id = parsed_requirement.get("requirement_id", generate_test_case_id())
+
+    for i, tc_data in enumerate(parsed_requirement.get("test_cases", [])):
         # 确保preconditions是字符串类型
-        preconditions_value = parsed_requirement.get("preconditions", "")
+        preconditions_value = tc_data.get("preconditions", "")
         if isinstance(preconditions_value, list):
             preconditions_value = "; ".join(str(item) for item in preconditions_value)
         elif not isinstance(preconditions_value, str):
@@ -273,25 +394,29 @@ async def generate_testcase(request: GenerateTestCaseRequest):
 
         # 创建测试用例
         testcase = TestCase(
-            id=parsed_requirement.get("id", generate_test_case_id()),
-            name=parsed_requirement.get("name", "未命名测试用例"),
-            objective=parsed_requirement.get("objective", ""),
+            id=generate_test_case_id(),
+            name=tc_data.get("name", f"测试用例{i+1}"),
+            objective=tc_data.get("objective", ""),
             preconditions=preconditions_value,
-            priority=parsed_requirement.get("priority", "medium"),
-            steps=parsed_requirement.get("steps", []),
-            created_at=datetime.now().isoformat()
+            priority=tc_data.get("priority", "medium"),
+            test_type=tc_data.get("test_type", "functional"),
+            coverage_aspect=tc_data.get("coverage_aspect"),
+            steps=tc_data.get("steps", []),
+            created_at=datetime.now().isoformat(),
+            requirement_id=requirement_id
         )
 
         # 存储测试用例
         session_data.generated_testcases[testcase.id] = testcase.dict()
+        test_cases_data.append(testcase.dict())
 
-        return {
-            "test_case": testcase.dict(),
-            "message": "测试用例生成成功"
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"测试用例生成失败: {str(e)}")
+    return {
+        "test_cases": test_cases_data,
+        "requirement_id": requirement_id,
+        "coverage_note": parsed_requirement.get("coverage_note", ""),
+        "message": f"成功生成{len(test_cases_data)}个测试用例",
+        "type": "multiple"
+    }
 
 @app.get("/testcases/{session_id}")
 async def get_testcases(session_id: str):

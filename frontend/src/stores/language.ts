@@ -49,10 +49,37 @@ export const useLanguageStore = defineStore('language', () => {
     '简单': { zh: '简单', en: 'Simple' },
     '中等': { zh: '中等', en: 'Medium' },
     '复杂': { zh: '复杂', en: 'Complex' },
+    '简单复杂度': { zh: '简单复杂度', en: 'Simple Complexity' },
+    '中等复杂度': { zh: '中等复杂度', en: 'Medium Complexity' },
+    '复杂复杂度': { zh: '复杂复杂度', en: 'Complex Complexity' },
+    '复杂度说明': { zh: '复杂度说明', en: 'Complexity Description' },
+    '生成单个测试用例，包含3-4个核心测试步骤，覆盖主要功能点': {
+      zh: '生成单个测试用例，包含3-4个核心测试步骤，覆盖主要功能点',
+      en: 'Generate a single test case with 3-4 core test steps covering main functionalities'
+    },
+    '生成单个测试用例，包含5-6个测试步骤，包含正常流程和基本异常场景': {
+      zh: '生成单个测试用例，包含5-6个测试步骤，包含正常流程和基本异常场景',
+      en: 'Generate a single test case with 5-6 test steps including normal flow and basic exception scenarios'
+    },
+    '生成2-4个相关测试用例，分别关注基本功能验证、异常场景处理、边界条件测试等': {
+      zh: '生成2-4个相关测试用例，分别关注基本功能验证、异常场景处理、边界条件测试等',
+      en: 'Generate 2-4 related test cases focusing on basic function validation, exception handling, boundary condition testing'
+    },
+    '单个测试用例，3-4步': { zh: '单个测试用例，3-4步', en: 'Single test case, 3-4 steps' },
+    '单个测试用例，5-6步': { zh: '单个测试用例，5-6步', en: 'Single test case, 5-6 steps' },
+    '多个测试用例，分组覆盖': { zh: '多个测试用例，分组覆盖', en: 'Multiple test cases, group coverage' },
+    '成功生成': { zh: '成功生成', en: 'Successfully generated' },
 
     // 生成的测试用例
     '生成的测试用例': { zh: '生成的测试用例', en: 'Generated Test Cases' },
     '个步骤': { zh: '个步骤', en: ' steps' },
+    '个': { zh: '个', en: '' },
+    '需求组': { zh: '需求组', en: 'Requirement Group' },
+    '个测试用例': { zh: '个测试用例', en: ' test cases' },
+    '其他测试用例': { zh: '其他测试用例', en: 'Other Test Cases' },
+    '多测试用例解析': { zh: '多测试用例解析', en: 'Multiple Test Cases Parsed' },
+    '覆盖说明': { zh: '覆盖说明', en: 'Coverage Description' },
+    '预览测试用例': { zh: '预览测试用例', en: 'Test Cases Preview' },
 
     // 解析结果
     '解析结果': { zh: '解析结果', en: 'Parse Result' },
