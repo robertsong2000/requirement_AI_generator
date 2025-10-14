@@ -80,6 +80,9 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 
     base_url = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
     model_name = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
+    temperature = float(os.getenv('TEMPERATURE', '0.3'))
+    top_p = float(os.getenv('TOP_P', '1.0'))
+    max_tokens = int(os.getenv('MAX_TOKENS', '2000'))
 
     # 构建提示词
     system_prompt = """你是一个专业的测试用例设计专家。请将用户的需求描述转换为结构化的测试用例格式。
@@ -134,8 +137,9 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.3,
-            max_tokens=2000
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens
         )
 
         # 获取响应内容
