@@ -56,47 +56,16 @@
             />
           </el-form-item>
 
-          <!-- 需求描述 -->
+          <!-- 需求描述输入 -->
           <el-form-item :label="t('需求描述')">
-            <div class="requirement-editor">
-              <div class="requirement-header">
-                <div class="requirement-tabs">
-                  <el-button
-                    size="small"
-                    :type="requirementLanguage === 'markdown' ? 'primary' : 'default'"
-                    @click="requirementLanguage = 'markdown'"
-                  >
-                    Markdown
-                  </el-button>
-                  <el-button
-                    size="small"
-                    :type="requirementLanguage === 'plaintext' ? 'primary' : 'default'"
-                    @click="requirementLanguage = 'plaintext'"
-                  >
-                    {{ t('纯文本') }}
-                  </el-button>
-                </div>
-                <div v-if="requirementData.description" style="color: #666; font-size: 12px; margin-left: auto;">
-                  📊 {{ requirementStats.characters }} {{ t('字符') }} | {{ requirementStats.lines }} {{ t('行') }}
-                </div>
-              </div>
-              <div class="requirement-container">
-                <div class="requirement-editor-content">
-                  <div
-                    ref="requirementEditor"
-                    contenteditable="true"
-                    class="requirement-content-editable"
-                    :class="{
-                      'language-markdown': requirementLanguage === 'markdown',
-                      'language-plaintext': requirementLanguage === 'plaintext'
-                    }"
-                    @input="onRequirementInput"
-                    @keydown="handleKeyDown"
-                    v-html="highlightedRequirementContent"
-                  ></div>
-                </div>
-              </div>
-            </div>
+            <el-input
+              v-model="requirementData.description"
+              type="textarea"
+              :rows="8"
+              :placeholder="t('请输入详细的需求描述...')"
+              maxlength="5000"
+              show-word-limit
+            />
           </el-form-item>
 
           <!-- 附加参数 -->
@@ -171,6 +140,49 @@
 
       <!-- 右侧内容区域 -->
       <main class="content-area">
+        <!-- 需求描述面板 -->
+        <section class="requirement-description-panel" v-if="requirementData.description">
+          <div class="panel-header">
+            <h3>📄 {{ t('需求描述') }}
+              <span style="color: #409eff; font-size: 14px; font-weight: normal;">
+                - {{ requirementData.title || t('未命名需求') }}
+              </span>
+            </h3>
+            <div class="panel-actions">
+              <div class="requirement-tabs">
+                <el-button
+                  size="small"
+                  :type="requirementLanguage === 'markdown' ? 'primary' : 'default'"
+                  @click="requirementLanguage = 'markdown'"
+                >
+                  Markdown
+                </el-button>
+                <el-button
+                  size="small"
+                  :type="requirementLanguage === 'plaintext' ? 'primary' : 'default'"
+                  @click="requirementLanguage = 'plaintext'"
+                >
+                  {{ t('纯文本') }}
+                </el-button>
+              </div>
+              <div v-if="requirementData.description" style="color: #666; font-size: 12px; margin-left: 10px;">
+                📊 {{ requirementStats.characters }} {{ t('字符') }} | {{ requirementStats.lines }} {{ t('行') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="requirement-display">
+            <div
+              class="requirement-content-display"
+              :class="{
+                'language-markdown': requirementLanguage === 'markdown',
+                'language-plaintext': requirementLanguage === 'plaintext'
+              }"
+              v-html="highlightedRequirementContent"
+            ></div>
+          </div>
+        </section>
+
         <!-- 解析结果面板 -->
         <section class="parse-result-panel" v-if="parsedRequirement">
           <div class="panel-header">
@@ -718,29 +730,6 @@ const handleLanguageToggle = () => {
   ElMessage.success(t('语言已切换'))
 }
 
-// 需求描述输入处理
-const onRequirementInput = (event: Event) => {
-  const target = event.target as HTMLElement
-  const text = target.innerText || target.textContent || ''
-  requirementData.description = text
-}
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Tab') {
-    event.preventDefault()
-    const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0)
-      const tabNode = document.createTextNode('  ')
-      range.insertNode(tabNode)
-      range.setStartAfter(tabNode)
-      range.setEndAfter(tabNode)
-      selection.removeAllRanges()
-      selection.addRange(range)
-    }
-  }
-}
-
 // 计算属性
 const highlightedRequirementContent = computed(() => {
   if (!requirementData.description) return ''
@@ -749,10 +738,11 @@ const highlightedRequirementContent = computed(() => {
     if (requirementLanguage.value === 'markdown') {
       return hljs.highlight(requirementData.description, { language: 'markdown' }).value
     }
-    return requirementData.description
+    // 将纯文本换行符转换为HTML换行
+    return requirementData.description.replace(/\n/g, '<br>')
   } catch (error) {
     console.warn(t('语法高亮失败: ') + error)
-    return requirementData.description
+    return requirementData.description.replace(/\n/g, '<br>')
   }
 })
 
