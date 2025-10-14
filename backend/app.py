@@ -70,7 +70,7 @@ def generate_test_case_id() -> str:
     """生成测试用例ID"""
     return f"TC_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
-def parse_requirement_with_llm(title: str, description: str, test_type: str, priority: str) -> Dict[str, Any]:
+def parse_requirement_with_llm(title: str, description: str, test_type: str, priority: str, complexity: str) -> Dict[str, Any]:
     """使用OpenAI兼容API解析需求"""
 
     # 检查环境变量
@@ -120,10 +120,15 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 - 避免模糊表述（如"正常"、"正确"），要具体说明
 - 包含必要的正常流程和异常场景验证
 
+## 复杂度处理指南：
+- **简单复杂度**: 生成3-4个核心测试步骤，覆盖主要功能点
+- **中等复杂度**: 生成5-6个测试步骤，包含正常流程和基本异常场景
+- **复杂复杂度**: 生成7-8个测试步骤，涵盖边界条件、异常处理和多种测试场景
+
 ## 特别注意：
 - 不要添加任何解释性文字或注释
 - 确保JSON格式完全正确，可以直接解析
-- 步骤数量适中，既不过于简单也不过于复杂
+- 根据复杂度调整步骤数量和详细程度
 - 考虑用户体验和业务流程的完整性"""
 
     user_prompt = f"""
@@ -133,6 +138,7 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 需求描述: {description}
 测试类型: {test_type}
 优先级: {priority}
+预估复杂度: {complexity}
 
 请按照以下JSON格式返回：
 {{
@@ -252,7 +258,8 @@ async def parse_requirement(request: ParseRequirementRequest):
             request.title,
             request.description,
             request.test_type,
-            request.priority
+            request.priority,
+            request.complexity
         )
 
         # 生成ID
