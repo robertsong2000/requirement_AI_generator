@@ -44,10 +44,12 @@ class ParseRequirementRequest(BaseModel):
     test_type: str
     priority: str
     complexity: str
+    user_prompt: Optional[str] = None
     session_id: str
 
 class GenerateTestCaseRequest(BaseModel):
     parsed_requirement: Dict[str, Any]
+    user_prompt: Optional[str] = None
     session_id: str
 
 class ParsedRequirement(BaseModel):
@@ -68,6 +70,7 @@ class TestCase(BaseModel):
     steps: List[Dict[str, str]]
     created_at: str
     requirement_id: Optional[str] = None
+    user_prompt: Optional[str] = None
 
 class MultipleTestCases(BaseModel):
     test_cases: List[TestCase]
@@ -78,7 +81,7 @@ def generate_test_case_id() -> str:
     """生成测试用例ID"""
     return f"TC_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
-def parse_requirement_with_llm(title: str, description: str, test_type: str, priority: str, complexity: str) -> Dict[str, Any]:
+def parse_requirement_with_llm(title: str, description: str, test_type: str, priority: str, complexity: str, user_prompt: Optional[str] = None) -> Dict[str, Any]:
     """使用OpenAI兼容API解析需求"""
 
     # 检查环境变量
@@ -112,7 +115,8 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
         print(f"警告：无法读取系统提示词文件，使用默认提示词。错误：{str(e)}")
         system_prompt = "你是测试用例设计专家，请将需求转换为测试用例JSON格式。"
 
-    user_prompt = f"""
+      # 构建基础提示词
+    base_prompt = f"""
 请分析以下需求并生成测试用例：
 
 需求标题: {title}
@@ -169,6 +173,17 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 {description}
 """
 
+    # 如果有用户提示词，将其整合到提示词中
+    if user_prompt and user_prompt.strip():
+        final_user_prompt = f"""{base_prompt}
+
+特别注意，用户提供了以下额外要求，请在生成测试用例时严格遵守：
+{user_prompt.strip()}
+
+请根据上述所有要求生成测试用例。"""
+    else:
+        final_user_prompt = base_prompt
+
     try:
         import openai
 
@@ -183,7 +198,7 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
             model=model_name,
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": final_user_prompt}
             ],
             temperature=temperature,
             top_p=top_p,
@@ -305,7 +320,8 @@ async def parse_requirement(request: ParseRequirementRequest):
             request.description,
             request.test_type,
             request.priority,
-            request.complexity
+            request.complexity,
+            request.user_prompt
         )
 
         # 生成ID
@@ -340,15 +356,15 @@ async def generate_testcase(request: GenerateTestCaseRequest):
         # 检查是否是多测试用例格式
         if "test_cases" in parsed_requirement:
             # 处理多个测试用例
-            return await generate_multiple_testcases(parsed_requirement, session_data)
+            return await generate_multiple_testcases(parsed_requirement, session_data, request.user_prompt)
         else:
             # 处理单个测试用例
-            return await generate_single_testcase(parsed_requirement, session_data)
+            return await generate_single_testcase(parsed_requirement, session_data, request.user_prompt)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"测试用例生成失败: {str(e)}")
 
-async def generate_single_testcase(parsed_requirement: Dict[str, Any], session_data: SessionData):
+async def generate_single_testcase(parsed_requirement: Dict[str, Any], session_data: SessionData, user_prompt: Optional[str] = None):
     """生成单个测试用例"""
     # 确保preconditions是字符串类型
     preconditions_value = parsed_requirement.get("preconditions", "")
@@ -367,7 +383,8 @@ async def generate_single_testcase(parsed_requirement: Dict[str, Any], session_d
         test_type=parsed_requirement.get("test_type", "functional"),
         coverage_aspect=parsed_requirement.get("coverage_aspect"),
         steps=parsed_requirement.get("steps", []),
-        created_at=datetime.now().isoformat()
+        created_at=datetime.now().isoformat(),
+        user_prompt=user_prompt
     )
 
     # 存储测试用例
@@ -379,7 +396,7 @@ async def generate_single_testcase(parsed_requirement: Dict[str, Any], session_d
         "type": "single"
     }
 
-async def generate_multiple_testcases(parsed_requirement: Dict[str, Any], session_data: SessionData):
+async def generate_multiple_testcases(parsed_requirement: Dict[str, Any], session_data: SessionData, user_prompt: Optional[str] = None):
     """生成多个测试用例"""
     test_cases_data = []
     requirement_id = parsed_requirement.get("requirement_id", generate_test_case_id())
@@ -403,7 +420,8 @@ async def generate_multiple_testcases(parsed_requirement: Dict[str, Any], sessio
             coverage_aspect=tc_data.get("coverage_aspect"),
             steps=tc_data.get("steps", []),
             created_at=datetime.now().isoformat(),
-            requirement_id=requirement_id
+            requirement_id=requirement_id,
+            user_prompt=user_prompt
         )
 
         # 存储测试用例

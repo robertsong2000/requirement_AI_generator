@@ -318,6 +318,73 @@
           </div>
         </section>
 
+        <!-- 用户提示词面板 -->
+        <section class="user-prompt-panel">
+          <div class="panel-header">
+            <h3>💡 {{ t('用户提示词') }}
+              <el-tooltip :content="t('用于补充system prompt的不足，可以指定特定的测试要求、格式或特殊场景')" placement="top">
+                <el-icon class="help-icon"><QuestionFilled /></el-icon>
+              </el-tooltip>
+            </h3>
+            <div class="panel-actions">
+              <el-button
+                size="small"
+                :type="isEditingUserPrompt ? 'primary' : 'default'"
+                @click="toggleEditUserPrompt"
+              >
+                {{ isEditingUserPrompt ? '✏️ ' + t('编辑中') : '📝 ' + t('编辑') }}
+              </el-button>
+              <div v-if="userPrompt" style="color: #666; font-size: 12px; margin-left: 10px;">
+                📝 {{ userPrompt.length }} {{ t('字符') }}
+              </div>
+              <div v-else style="color: #999; font-size: 12px; margin-left: 10px;">
+                💡 {{ t('可选，补充特定要求') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="user-prompt-display">
+            <!-- 编辑模式 -->
+            <div v-if="isEditingUserPrompt" class="user-prompt-edit-mode">
+              <el-input
+                v-model="editedUserPrompt"
+                type="textarea"
+                :rows="6"
+                :placeholder="t('请输入额外的提示词，例如：\n- 重点关注安全相关的测试用例\n- 包含异常场景和边界条件测试\n- 测试步骤要详细具体\n- 输出格式为JSON\n...')"
+                maxlength="2000"
+                show-word-limit
+                class="user-prompt-textarea"
+              />
+              <div class="user-prompt-edit-actions">
+                <el-button size="small" type="success" @click="saveUserPromptEdit">
+                  💾 {{ t('保存') }}
+                </el-button>
+                <el-button size="small" @click="cancelUserPromptEdit">
+                  ❌ {{ t('取消') }}
+                </el-button>
+                <el-button size="small" @click="clearUserPrompt">
+                  🗑️ {{ t('清空') }}
+                </el-button>
+              </div>
+            </div>
+
+            <!-- 显示模式 -->
+            <div
+              v-else
+              class="user-prompt-content-display"
+              @click="toggleEditUserPrompt()"
+            >
+              <div v-if="userPrompt" class="user-prompt-content">
+                <div class="prompt-text">{{ userPrompt }}</div>
+              </div>
+              <div v-else class="empty-user-prompt">
+                <p>{{ t('💡 添加用户提示词...') }}</p>
+                <p style="font-size: 12px; color: #999;">{{ t('点击此处编辑，用于补充system prompt的不足') }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- 解析结果面板 -->
         <section class="parse-result-panel" v-if="parsedRequirement">
           <div class="panel-header">
@@ -598,6 +665,7 @@ interface RequirementData {
   testType: string
   priority: string
   complexity: string
+  userPrompt?: string
 }
 
 interface ParsedRequirement {
@@ -671,6 +739,9 @@ const isEditingParsed = ref<boolean>(false)
 const editedParsedRequirement = ref<ParsedRequirement | null>(null)
 const isEditingRequirement = ref<boolean>(false)
 const editedRequirement = ref<string>('')
+const userPrompt = ref<string>('')
+const isEditingUserPrompt = ref<boolean>(false)
+const editedUserPrompt = ref<string>('')
 
 // 表单数据
 const requirementData = reactive<RequirementData>({
@@ -678,7 +749,8 @@ const requirementData = reactive<RequirementData>({
   description: '',
   testType: 'functional',
   priority: 'medium',
-  complexity: 'medium'
+  complexity: 'medium',
+  userPrompt: ''
 })
 
 // 需求模板数据
@@ -1084,6 +1156,7 @@ const parseRequirement = async () => {
       test_type: requirementData.testType,
       priority: requirementData.priority,
       complexity: requirementData.complexity,
+      user_prompt: requirementData.userPrompt,
       session_id: sessionId.value
     })
 
@@ -1128,6 +1201,7 @@ const generateTestCase = async () => {
   try {
     const response = await axios.post(`${API_BASE_URL}/generate-testcase`, {
       parsed_requirement: parsedRequirement.value,
+      user_prompt: requirementData.userPrompt,
       session_id: sessionId.value
     })
 
@@ -1190,6 +1264,7 @@ const selectTestCase = (testCase: GeneratedTestCase) => {
 const resetForm = () => {
   requirementData.title = ''
   requirementData.description = ''
+  requirementData.userPrompt = ''
   requirementData.testType = 'functional'
   requirementData.priority = 'medium'
   requirementData.complexity = 'medium'
@@ -1198,6 +1273,12 @@ const resetForm = () => {
   selectedTestCase.value = null
   generatedTestCases.value = []
   testCasesGroups.value = []
+
+  // 重置用户提示词相关状态
+  userPrompt.value = ''
+  editedUserPrompt.value = ''
+  isEditingUserPrompt.value = false
+
   errorMessage.value = ''
   ElMessage.success(t('表单已重置'))
 }
@@ -1229,6 +1310,38 @@ const cancelRequirementEdit = () => {
   editedRequirement.value = requirementData.description
   isEditingRequirement.value = false
   ElMessage.info(t('已取消编辑'))
+}
+
+const toggleEditUserPrompt = () => {
+  if (!isEditingUserPrompt.value) {
+    // 进入编辑模式
+    editedUserPrompt.value = userPrompt.value
+    isEditingUserPrompt.value = true
+  } else {
+    // 退出编辑模式
+    isEditingUserPrompt.value = false
+  }
+}
+
+const saveUserPromptEdit = () => {
+  userPrompt.value = editedUserPrompt.value
+  requirementData.userPrompt = editedUserPrompt.value
+  isEditingUserPrompt.value = false
+  ElMessage.success(t('用户提示词已保存'))
+}
+
+const cancelUserPromptEdit = () => {
+  editedUserPrompt.value = userPrompt.value
+  isEditingUserPrompt.value = false
+  ElMessage.info(t('已取消编辑'))
+}
+
+const clearUserPrompt = () => {
+  userPrompt.value = ''
+  requirementData.userPrompt = ''
+  editedUserPrompt.value = ''
+  isEditingUserPrompt.value = false
+  ElMessage.success(t('用户提示词已清空'))
 }
 
 const editParsedRequirement = () => {
