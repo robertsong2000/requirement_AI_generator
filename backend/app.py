@@ -105,7 +105,7 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 2. JSON结构必须包含以下字段：
    - name: 测试用例名称（简洁明确，体现测试目标）
    - objective: 测试目标（具体说明要验证什么功能或特性）
-   - preconditions: 前置条件（测试环境、数据、用户状态等准备要求）
+   - preconditions: 前置条件（字符串格式，测试环境、数据、用户状态等准备要求，不要返回数组）
    - steps: 测试步骤数组（3-8个步骤，逻辑清晰）
 
 3. 每个测试步骤必须包含：
@@ -138,7 +138,7 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
 {{
     "name": "基于需求标题的测试用例名称",
     "objective": "明确具体的测试目标",
-    "preconditions": "测试环境准备要求和前置条件",
+    "preconditions": "测试环境准备要求和前置条件（注意：必须是字符串格式，不要返回数组）",
     "steps": [
         {{
             "test_step": "测试步骤名称",
@@ -197,6 +197,12 @@ def parse_requirement_with_llm(title: str, description: str, test_type: str, pri
         for field in required_fields:
             if field not in result:
                 raise Exception(f"LLM返回结果缺少必需字段: {field}")
+
+        # 确保preconditions是字符串类型
+        if isinstance(result['preconditions'], list):
+            result['preconditions'] = "; ".join(str(item) for item in result['preconditions'])
+        elif not isinstance(result['preconditions'], str):
+            result['preconditions'] = str(result['preconditions'])
 
         if not isinstance(result['steps'], list) or len(result['steps']) == 0:
             raise Exception("LLM返回的steps字段为空或格式错误")
@@ -278,12 +284,19 @@ async def generate_testcase(request: GenerateTestCaseRequest):
         # 从解析的需求生成测试用例
         parsed_requirement = request.parsed_requirement
 
+        # 确保preconditions是字符串类型
+        preconditions_value = parsed_requirement.get("preconditions", "")
+        if isinstance(preconditions_value, list):
+            preconditions_value = "; ".join(str(item) for item in preconditions_value)
+        elif not isinstance(preconditions_value, str):
+            preconditions_value = str(preconditions_value)
+
         # 创建测试用例
         testcase = TestCase(
             id=parsed_requirement.get("id", generate_test_case_id()),
             name=parsed_requirement.get("name", "未命名测试用例"),
             objective=parsed_requirement.get("objective", ""),
-            preconditions=parsed_requirement.get("preconditions", ""),
+            preconditions=preconditions_value,
             priority=parsed_requirement.get("priority", "medium"),
             steps=parsed_requirement.get("steps", []),
             created_at=datetime.now().isoformat()

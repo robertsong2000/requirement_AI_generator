@@ -339,6 +339,7 @@ import 'highlight.js/styles/github.css'
 import hljs from 'highlight.js/lib/core'
 import markdown from 'highlight.js/lib/languages/markdown'
 import { useLanguageStore } from '../stores/language'
+import * as XLSX from 'xlsx'
 
 // 注册语言
 hljs.registerLanguage('markdown', markdown)
@@ -657,7 +658,7 @@ const exportTestCase = (format: string) => {
       downloadMarkdown(selectedTestCase.value)
       break
     case 'excel':
-      ElMessage.info(t('Excel导出功能开发中'))
+      downloadExcel(selectedTestCase.value)
       break
   }
 }
@@ -700,6 +701,66 @@ const downloadMarkdown = (testCase: GeneratedTestCase) => {
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
   ElMessage.success(t('Markdown文件下载成功'))
+}
+
+const downloadExcel = (testCase: GeneratedTestCase) => {
+  // 创建工作簿
+  const wb = XLSX.utils.book_new()
+
+  // 测试用例基本信息
+  const basicInfo = [
+    [t('字段'), t('值')],
+    [t('用例ID'), testCase.id],
+    [t('用例名称'), testCase.name],
+    [t('测试目标'), testCase.objective],
+    [t('前置条件'), testCase.preconditions],
+    [t('优先级'), t(testCase.priority)],
+    [t('创建时间'), formatTime(testCase.created_at)],
+    [t('步骤总数'), testCase.steps.length]
+  ]
+
+  // 创建基本信息工作表
+  const wsBasic = XLSX.utils.aoa_to_sheet(basicInfo)
+  // 设置列宽
+  wsBasic['!cols'] = [
+    { wch: 15 }, // 第一列宽度
+    { wch: 50 }  // 第二列宽度
+  ]
+  XLSX.utils.book_append_sheet(wb, wsBasic, t('基本信息'))
+
+  // 测试步骤数据
+  const stepsData = [
+    [
+      t('序号'),
+      t('测试步骤'),
+      t('详细描述'),
+      t('预期结果')
+    ],
+    ...testCase.steps.map((step, index) => [
+      index + 1,
+      step.test_step,
+      step.description,
+      step.expected_result
+    ])
+  ]
+
+  // 创建测试步骤工作表
+  const wsSteps = XLSX.utils.aoa_to_sheet(stepsData)
+  // 设置列宽
+  wsSteps['!cols'] = [
+    { wch: 8 },  // 序号
+    { wch: 25 }, // 测试步骤
+    { wch: 50 }, // 详细描述
+    { wch: 30 }  // 预期结果
+  ]
+  XLSX.utils.book_append_sheet(wb, wsSteps, t('测试步骤'))
+
+  // 生成文件名
+  const filename = testCase.name.replace(/[^\w\u4e00-\u9fa5]/g, '_') + '.xlsx'
+
+  // 导出文件
+  XLSX.writeFile(wb, filename)
+  ElMessage.success(t('Excel文件下载成功'))
 }
 
 const copyTestCase = async () => {
