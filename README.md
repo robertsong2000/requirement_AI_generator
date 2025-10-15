@@ -55,9 +55,20 @@ python app.py
 ### 使用Docker启动
 
 ```bash
-# 构建并启动服务
+# 仅启动后端服务
 docker-compose up -d
+
+# 启动后端 + 前端开发环境
+docker-compose --profile dev up -d
+
+# 启动后端 + 前端生产环境
+docker-compose --profile prod up -d
 ```
+
+**服务访问地址：**
+- 后端API: `http://localhost:8000`
+- 前端开发环境: `http://localhost:5173`
+- 前端生产环境: `http://localhost:80`
 
 ## API文档
 

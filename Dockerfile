@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # 复制应用程序代码
-COPY . .
+COPY backend/ .
 
 # 创建非 root 用户
 RUN useradd --create-home --shell /bin/bash app && \
