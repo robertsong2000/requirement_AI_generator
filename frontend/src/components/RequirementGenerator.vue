@@ -515,6 +515,16 @@
                       <el-tag v-else-if="testCase.coverage_aspect" type="info" size="small">
                         {{ testCase.coverage_aspect }}
                       </el-tag>
+                      <el-button
+                        v-if="!isEditingParsed"
+                        size="small"
+                        type="primary"
+                        plain
+                        @click="editIndividualTestCase(testCase, index)"
+                        style="margin-left: 8px;"
+                      >
+                        ✏️ {{ t('详情') }}
+                      </el-button>
                     </div>
                   </div>
                   <el-input
@@ -676,6 +686,116 @@
         </div>
       </main>
     </div>
+
+    <!-- 单个测试用例编辑对话框 -->
+    <el-dialog
+      v-model="isEditingIndividualTestCase"
+      :title="`✏️ ${t('编辑测试用例详情')}: ${editingIndividualTestCase?.name || ''}`"
+      width="80%"
+      :before-close="cancelIndividualTestCaseEdit"
+    >
+      <div v-if="editingIndividualTestCase" class="individual-testcase-edit">
+        <el-form :model="editingIndividualTestCase" label-width="100px">
+          <!-- 基本信息 -->
+          <el-form-item :label="t('测试用例名称')">
+            <el-input v-model="editingIndividualTestCase.name" />
+          </el-form-item>
+
+          <el-form-item :label="t('测试目标')">
+            <el-input
+              v-model="editingIndividualTestCase.objective"
+              type="textarea"
+              :rows="3"
+            />
+          </el-form-item>
+
+          <el-form-item :label="t('前置条件')">
+            <el-input
+              v-model="editingIndividualTestCase.preconditions"
+              type="textarea"
+              :rows="2"
+            />
+          </el-form-item>
+
+          <el-form-item :label="t('优先级')">
+            <el-select v-model="editingIndividualTestCase.priority">
+              <el-option :label="t('高')" value="high" />
+              <el-option :label="t('中')" value="medium" />
+              <el-option :label="t('低')" value="low" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item :label="t('覆盖方面')">
+            <el-input v-model="editingIndividualTestCase.coverage_aspect" />
+          </el-form-item>
+        </el-form>
+
+        <!-- 测试步骤 -->
+        <div class="test-steps-section">
+          <div class="section-header">
+            <h4>{{ t('测试步骤') }}</h4>
+            <el-button size="small" type="primary" @click="addTestStep">
+              ➕ {{ t('添加步骤') }}
+            </el-button>
+          </div>
+
+          <div class="test-steps-list">
+            <div
+              v-for="(step, stepIndex) in editingIndividualTestCase.steps || []"
+              :key="stepIndex"
+              class="test-step-item"
+            >
+              <div class="step-header">
+                <span class="step-number">{{ stepIndex + 1 }}.</span>
+                <el-button
+                  size="small"
+                  type="danger"
+                  plain
+                  @click="removeTestStep(stepIndex)"
+                  class="remove-step-btn"
+                >
+                  🗑️ {{ t('删除') }}
+                </el-button>
+              </div>
+
+              <div class="step-content">
+                <el-form-item :label="t('测试步骤')">
+                  <el-input
+                    v-model="step.test_step"
+                    type="textarea"
+                    :rows="2"
+                    :placeholder="t('请输入测试步骤描述')"
+                  />
+                </el-form-item>
+
+                <el-form-item :label="t('详细描述')">
+                  <el-input
+                    v-model="step.description"
+                    type="textarea"
+                    :rows="2"
+                    :placeholder="t('请输入详细操作描述')"
+                  />
+                </el-form-item>
+
+                <el-form-item :label="t('预期结果')">
+                  <el-input
+                    v-model="step.expected_result"
+                    type="textarea"
+                    :rows="2"
+                    :placeholder="t('请输入预期结果')"
+                  />
+                </el-form-item>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <el-button @click="cancelIndividualTestCaseEdit">{{ t('取消') }}</el-button>
+        <el-button type="primary" @click="saveIndividualTestCaseEdit">{{ t('保存') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -795,6 +915,11 @@ const editedRequirement = ref<string>('')
 const userPrompt = ref<string>('')
 const isEditingUserPrompt = ref<boolean>(false)
 const editedUserPrompt = ref<string>('')
+
+// 单个测试用例编辑相关
+const isEditingIndividualTestCase = ref<boolean>(false)
+const editingIndividualTestCase = ref<any>(null)
+const editingTestCaseIndex = ref<number>(-1)
 
 // 表单数据
 const requirementData = reactive<RequirementData>({
@@ -1312,6 +1437,59 @@ const generateTestCase = async () => {
 
 const selectTestCase = (testCase: GeneratedTestCase) => {
   selectedTestCase.value = testCase
+}
+
+// 单个测试用例编辑相关方法
+const editIndividualTestCase = (testCase: any, index: number) => {
+  // 深拷贝测试用例以避免直接修改原数据
+  editingIndividualTestCase.value = JSON.parse(JSON.stringify(testCase))
+  editingTestCaseIndex.value = index
+  isEditingIndividualTestCase.value = true
+}
+
+const saveIndividualTestCaseEdit = () => {
+  if (!editingIndividualTestCase.value || editingTestCaseIndex.value === -1) return
+
+  // 更新原始数据中的测试用例
+  if (editedParsedRequirement.value?.test_cases) {
+    editedParsedRequirement.value.test_cases[editingTestCaseIndex.value] = editingIndividualTestCase.value
+  } else if (parsedRequirement.value?.test_cases) {
+    // 如果没有正在编辑的整体数据，直接更新原数据
+    const sourceData = editedParsedRequirement.value || parsedRequirement.value
+    if (sourceData?.test_cases) {
+      sourceData.test_cases[editingTestCaseIndex.value] = editingIndividualTestCase.value
+    }
+  }
+
+  ElMessage.success(t('测试用例已保存'))
+  cancelIndividualTestCaseEdit()
+}
+
+const cancelIndividualTestCaseEdit = () => {
+  isEditingIndividualTestCase.value = false
+  editingIndividualTestCase.value = null
+  editingTestCaseIndex.value = -1
+}
+
+const addTestStep = () => {
+  if (!editingIndividualTestCase.value) return
+
+  if (!editingIndividualTestCase.value.steps) {
+    editingIndividualTestCase.value.steps = []
+  }
+
+  editingIndividualTestCase.value.steps.push({
+    test_step: '',
+    description: '',
+    expected_result: ''
+  })
+}
+
+const removeTestStep = (index: number) => {
+  if (!editingIndividualTestCase.value?.steps) return
+
+  editingIndividualTestCase.value.steps.splice(index, 1)
+  ElMessage.success(t('步骤已删除'))
 }
 
 const resetForm = () => {

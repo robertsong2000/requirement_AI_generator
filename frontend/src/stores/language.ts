@@ -227,6 +227,14 @@ export const useLanguageStore = defineStore('language', () => {
     '边界条件': { zh: '边界条件', en: 'Boundary Conditions' },
     '异常场景': { zh: '异常场景', en: 'Exception Scenarios' },
     '模板已应用: ': { zh: '模板已应用: ', en: 'Template applied: ' },
+    '详情': { zh: '详情', en: 'Details' },
+    '编辑测试用例详情': { zh: '编辑测试用例详情', en: 'Edit Test Case Details' },
+    '删除': { zh: '删除', en: 'Delete' },
+    '请输入测试步骤描述': { zh: '请输入测试步骤描述', en: 'Please enter test step description' },
+    '请输入详细操作描述': { zh: '请输入详细操作描述', en: 'Please enter detailed operation description' },
+    '请输入预期结果': { zh: '请输入预期结果', en: 'Please enter expected result' },
+    '测试用例已保存': { zh: '测试用例已保存', en: 'Test case saved' },
+    '步骤已删除': { zh: '步骤已删除', en: 'Step deleted' },
     '请用英文格式生成测试用例，所有内容包括测试步骤、描述和预期结果都使用英文。': {
       zh: '请用英文格式生成测试用例，所有内容包括测试步骤、描述和预期结果都使用英文。',
       en: 'Please generate test cases in English format, with all content including test steps, descriptions, and expected results written in English.'
