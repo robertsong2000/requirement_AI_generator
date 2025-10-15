@@ -16,7 +16,7 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'http://localhost:8005',
+        target: process.env.DOCKER_ENV === 'true' ? 'http://backend:8005' : 'http://localhost:8005',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }
