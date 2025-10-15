@@ -226,23 +226,24 @@ export const useLanguageStore = defineStore('language', () => {
     '详细步骤': { zh: '详细步骤', en: 'Detailed Steps' },
     '边界条件': { zh: '边界条件', en: 'Boundary Conditions' },
     '异常场景': { zh: '异常场景', en: 'Exception Scenarios' },
-    'Please generate test cases in English format, with all content including test steps, descriptions, and expected results written in English.': {
+    '模板已应用: ': { zh: '模板已应用: ', en: 'Template applied: ' },
+    '请用英文格式生成测试用例，所有内容包括测试步骤、描述和预期结果都使用英文。': {
       zh: '请用英文格式生成测试用例，所有内容包括测试步骤、描述和预期结果都使用英文。',
       en: 'Please generate test cases in English format, with all content including test steps, descriptions, and expected results written in English.'
     },
-    'Please generate very detailed test steps, each step should include:\\n- Specific actions to be taken\\n- Detailed input data and parameters\\n- Clear expected results\\n- Verification methods\\n- Time requirements if applicable': {
+    '请生成非常详细的测试步骤，每个步骤应包括：\n- 要执行的具体操作\n- 详细的输入数据和参数\n- 清晰的预期结果\n- 验证方法\n- 如适用，时间要求': {
       zh: '请生成非常详细的测试步骤，每个步骤应包括：\n- 要执行的具体操作\n- 详细的输入数据和参数\n- 清晰的预期结果\n- 验证方法\n- 如适用，时间要求',
       en: 'Please generate very detailed test steps, each step should include:\n- Specific actions to be taken\n- Detailed input data and parameters\n- Clear expected results\n- Verification methods\n- Time requirements if applicable'
     },
-    'Please focus on security-related testing, including:\\n- Authentication and authorization tests\\n- Input validation and SQL injection prevention\\n- XSS and CSRF protection tests\\n- Data encryption and secure transmission\\n- Access control and privilege escalation tests': {
+    '请专注于安全相关测试，包括：\n- 身份验证和授权测试\n- 输入验证和SQL注入防护\n- XSS和CSRF保护测试\n- 数据加密和安全传输\n- 访问控制和权限提升测试': {
       zh: '请专注于安全相关测试，包括：\n- 身份验证和授权测试\n- 输入验证和SQL注入防护\n- XSS和CSRF保护测试\n- 数据加密和安全传输\n- 访问控制和权限提升测试',
       en: 'Please focus on security-related testing, including:\n- Authentication and authorization tests\n- Input validation and SQL injection prevention\n- XSS and CSRF protection tests\n- Data encryption and secure transmission\n- Access control and privilege escalation tests'
     },
-    'Please include comprehensive boundary condition tests:\\n- Minimum and maximum values\\n- Empty, null, and invalid inputs\\n- Character length limits\\n- Numeric range boundaries\\n- File size and format limits\\n- Concurrent user limits': {
+    '请包含全面的边界条件测试：\n- 最小值和最大值\n- 空值、null和无效输入\n- 字符长度限制\n- 数值范围边界\n- 文件大小和格式限制\n- 并发用户限制': {
       zh: '请包含全面的边界条件测试：\n- 最小值和最大值\n- 空值、null和无效输入\n- 字符长度限制\n- 数值范围边界\n- 文件大小和格式限制\n- 并发用户限制',
       en: 'Please include comprehensive boundary condition tests:\n- Minimum and maximum values\n- Empty, null, and invalid inputs\n- Character length limits\n- Numeric range boundaries\n- File size and format limits\n- Concurrent user limits'
     },
-    'Please include negative test scenarios:\\n- Invalid input formats\\n- Missing required fields\\n- System error handling\\n- Network interruption scenarios\\n- Resource exhaustion cases\\n- Malformed requests and data corruption': {
+    '请包含负面测试场景：\n- 无效的输入格式\n- 缺少必填字段\n- 系统错误处理\n- 网络中断场景\n- 资源耗尽情况\n- 格式错误的请求和数据损坏': {
       zh: '请包含负面测试场景：\n- 无效的输入格式\n- 缺少必填字段\n- 系统错误处理\n- 网络中断场景\n- 资源耗尽情况\n- 格式错误的请求和数据损坏',
       en: 'Please include negative test scenarios:\n- Invalid input formats\n- Missing required fields\n- System error handling\n- Network interruption scenarios\n- Resource exhaustion cases\n- Malformed requests and data corruption'
     }
