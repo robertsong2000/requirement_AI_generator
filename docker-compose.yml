@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     container_name: requirement_ai_backend
     ports:
-      - "8000:8000"
+      - "8005:8005"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
@@ -36,7 +36,7 @@ services:
       dockerfile: Dockerfile.dev
     container_name: requirement_ai_frontend_dev
     ports:
-      - "5173:5173"
+      - "5174:5174"
     depends_on:
       - backend
     volumes:

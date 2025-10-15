@@ -66,8 +66,8 @@ docker-compose --profile prod up -d
 ```
 
 **服务访问地址：**
-- 后端API: `http://localhost:8000`
-- 前端开发环境: `http://localhost:5173`
+- 后端API: `http://localhost:8005`
+- 前端开发环境: `http://localhost:5174`
 - 前端生产环境: `http://localhost:80`
 
 ## API文档

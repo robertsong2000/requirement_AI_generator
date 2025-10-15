@@ -37,11 +37,11 @@ RUN useradd --create-home --shell /bin/bash app && \
 USER app
 
 # 暴露端口
-EXPOSE 8000
+EXPOSE 8005
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8005/health || exit 1
 
 # 启动命令
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8005"]
