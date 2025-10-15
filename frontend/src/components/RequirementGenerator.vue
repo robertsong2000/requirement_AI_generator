@@ -355,6 +355,59 @@
                 show-word-limit
                 class="user-prompt-textarea"
               />
+
+              <!-- 预设模板按钮 -->
+              <div class="prompt-templates-section">
+                <p style="margin: 8px 0; color: #666; font-size: 13px;">{{ t('快速模板:') }}</p>
+                <div class="template-buttons" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                  <el-button
+                    size="small"
+                    type="primary"
+                    plain
+                    @click="applyPromptTemplate('english')"
+                    style="font-size: 12px;"
+                  >
+                    🌍 {{ t('使用英文生成') }}
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="success"
+                    plain
+                    @click="applyPromptTemplate('detailed')"
+                    style="font-size: 12px;"
+                  >
+                    📋 {{ t('详细步骤') }}
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="warning"
+                    plain
+                    @click="applyPromptTemplate('security')"
+                    style="font-size: 12px;"
+                  >
+                    🔒 {{ t('安全测试') }}
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="info"
+                    plain
+                    @click="applyPromptTemplate('boundary')"
+                    style="font-size: 12px;"
+                  >
+                    🎯 {{ t('边界条件') }}
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="danger"
+                    plain
+                    @click="applyPromptTemplate('negative')"
+                    style="font-size: 12px;"
+                  >
+                    ⚠️ {{ t('异常场景') }}
+                  </el-button>
+                </div>
+              </div>
+
               <div class="user-prompt-edit-actions">
                 <el-button size="small" type="success" @click="saveUserPromptEdit">
                   💾 {{ t('保存') }}
@@ -1342,6 +1395,24 @@ const clearUserPrompt = () => {
   editedUserPrompt.value = ''
   isEditingUserPrompt.value = false
   ElMessage.success(t('用户提示词已清空'))
+}
+
+const applyPromptTemplate = (templateType: string) => {
+  const templates = {
+    english: t('Please generate test cases in English format, with all content including test steps, descriptions, and expected results written in English.'),
+    detailed: t('Please generate very detailed test steps, each step should include:\n- Specific actions to be taken\n- Detailed input data and parameters\n- Clear expected results\n- Verification methods\n- Time requirements if applicable'),
+    security: t('Please focus on security-related testing, including:\n- Authentication and authorization tests\n- Input validation and SQL injection prevention\n- XSS and CSRF protection tests\n- Data encryption and secure transmission\n- Access control and privilege escalation tests'),
+    boundary: t('Please include comprehensive boundary condition tests:\n- Minimum and maximum values\n- Empty, null, and invalid inputs\n- Character length limits\n- Numeric range boundaries\n- File size and format limits\n- Concurrent user limits'),
+    negative: t('Please include negative test scenarios:\n- Invalid input formats\n- Missing required fields\n- System error handling\n- Network interruption scenarios\n- Resource exhaustion cases\n- Malformed requests and data corruption')
+  }
+
+  const templateText = templates[templateType as keyof typeof templates]
+  if (templateText) {
+    editedUserPrompt.value = editedUserPrompt.value
+      ? editedUserPrompt.value + '\n\n' + templateText
+      : templateText
+    ElMessage.success(t('模板已应用: ') + templateType)
+  }
 }
 
 const editParsedRequirement = () => {
