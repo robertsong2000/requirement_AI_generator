@@ -9,8 +9,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
+# 配置阿里云源并安装系统依赖
+RUN rm -f /etc/apt/sources.list.d/debian.sources && \
+    echo "deb https://mirrors.aliyun.com/debian/ trixie main non-free non-free-firmware contrib" > /etc/apt/sources.list && \
+    echo "deb https://mirrors.aliyun.com/debian/ trixie-updates main non-free non-free-firmware contrib" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.aliyun.com/debian-security/ trixie-security main non-free non-free-firmware contrib" >> /etc/apt/sources.list && \
+    apt-get update && apt-get install -y \
     build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
