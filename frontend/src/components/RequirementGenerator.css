@@ -275,10 +275,20 @@
   background: #dc3545;
 }
 
+.status-checking {
+  background: #ffc107;
+  animation: spin 1s linear infinite;
+}
+
 @keyframes pulse {
   0% { opacity: 1; }
   50% { opacity: 0.5; }
   100% { opacity: 1; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .main-content {

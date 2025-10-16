@@ -395,7 +395,14 @@ export const useLanguageStore = defineStore('language', () => {
     },
 
     // 文件上传相关
-    '加载需求文件': { zh: '加载需求文件', en: 'Load Requirement File' }
+    '加载需求文件': { zh: '加载需求文件', en: 'Load Requirement File' },
+
+    // 连接状态相关
+    '正在连接服务，请稍候...': { zh: '正在连接服务，请稍候...', en: 'Connecting to service, please wait...' },
+    '服务连接成功': { zh: '服务连接成功', en: 'Service connected successfully' },
+    '正在检查连接': { zh: '正在检查连接', en: 'Checking connection' },
+    '已连接': { zh: '已连接', en: 'Connected' },
+    '连接断开': { zh: '连接断开', en: 'Disconnected' }
   })
 
   function t(key: string): string {

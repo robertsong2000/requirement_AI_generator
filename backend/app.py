@@ -483,6 +483,19 @@ async def clear_session(session_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"清除会话失败: {str(e)}")
 
+@app.post("/session/cleanup")
+async def cleanup_session(request: dict):
+    """通过POST请求清除会话数据（用于sendBeacon）"""
+    try:
+        session_id = request.get("session_id")
+        if session_id and session_id in store:
+            del store[session_id]
+
+        return {"message": "会话已清除"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"清除会话失败: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8005)

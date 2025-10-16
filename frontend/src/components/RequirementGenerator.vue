@@ -29,7 +29,14 @@
           </div>
           <div class="session-info">
             {{ t('会话ID') }}: {{ sessionId }}
-            <span :class="['status-indicator', isConnected ? 'status-connected' : 'status-disconnected']"></span>
+            <span
+              :class="[
+                'status-indicator',
+                isConnected ? 'status-connected' :
+                isCheckingHealth ? 'status-checking' : 'status-disconnected'
+              ]"
+              :title="isCheckingHealth ? t('正在检查连接') : (isConnected ? t('已连接') : t('连接断开'))"
+            ></span>
           </div>
         </div>
       </div>
@@ -937,7 +944,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick, computed } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, onUnmounted, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { InfoFilled, QuestionFilled, UploadFilled } from '@element-plus/icons-vue'
 import axios from 'axios'
@@ -1062,6 +1069,10 @@ const editingTestCaseIndex = ref<number>(-1)
 // 使用说明弹窗相关
 const isUserGuideVisible = ref<boolean>(false)
 const activeGuideSections = ref<string>('quickstart')
+
+// 心跳相关
+const heartbeatInterval = ref<NodeJS.Timeout | null>(null)
+const isCheckingHealth = ref<boolean>(false)
 
 // 表单数据
 const requirementData = reactive<RequirementData>({
@@ -1434,19 +1445,77 @@ ${t('验证电池管理系统(BMS)的安全功能，包括过充保护、过放�
 onMounted(() => {
   localStorage.setItem('requirement_session_id', sessionId.value)
   languageStore.initLanguage()
-  checkHealth()
+
+  // 启动心跳检查
+  startHeartbeat()
+
+  // 添加页面卸载事件监听器
+  window.addEventListener('beforeunload', handleBeforeUnload)
+
+  // 显示首次连接状态
+  setTimeout(() => {
+    if (!isConnected.value) {
+      ElMessage.warning(t('正在连接服务，请稍候...'))
+    }
+  }, 1000)
+})
+
+onBeforeUnmount(() => {
+  // 停止心跳
+  stopHeartbeat()
+
+  // 组件卸载前的清理（例如路由切换）
+  clearSession()
+})
+
+onUnmounted(() => {
+  // 移除事件监听器
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 
 // 方法
-const checkHealth = async () => {
+const checkHealth = async (showError = false) => {
+  if (isCheckingHealth.value) return
+
+  isCheckingHealth.value = true
   try {
-    const response = await axios.get(`${API_BASE_URL}/health`)
+    const response = await axios.get(`${API_BASE_URL}/health`, {
+      timeout: 5000 // 5秒超时
+    })
     isConnected.value = true
     modelName.value = response.data.model_name || ''
+
+    // 如果之前是断开的，现在连接上了，显示成功消息
+    if (showError) {
+      ElMessage.success(t('服务连接成功'))
+    }
   } catch (_: any) {
     isConnected.value = false
     modelName.value = ''
-    ElMessage.error(t('服务连接失败'))
+    if (showError) {
+      ElMessage.error(t('服务连接失败'))
+    }
+  } finally {
+    isCheckingHealth.value = false
+  }
+}
+
+// 启动心跳检查
+const startHeartbeat = () => {
+  // 立即检查一次
+  checkHealth(false)
+
+  // 定期检查，每30秒一次
+  heartbeatInterval.value = setInterval(() => {
+    checkHealth(false)
+  }, 30000)
+}
+
+// 停止心跳检查
+const stopHeartbeat = () => {
+  if (heartbeatInterval.value) {
+    clearInterval(heartbeatInterval.value)
+    heartbeatInterval.value = null
   }
 }
 
@@ -1980,6 +2049,34 @@ const showUserGuide = () => {
 
 const closeUserGuide = () => {
   isUserGuideVisible.value = false
+}
+
+// 会话清理方法
+const clearSession = async () => {
+  try {
+    await axios.delete(`${API_BASE_URL}/session/${sessionId.value}`)
+    console.log('会话已清理')
+  } catch (error) {
+    console.warn('清理会话失败:', error)
+  }
+}
+
+// 页面卸载前的处理
+const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+  // 对于 sendBeacon，我们需要使用 POST 方法，因为 sendBeacon 不支持 DELETE
+  if (navigator.sendBeacon) {
+    // 使用 POST 方法发送清理请求，后端可以添加对应的 POST 端点
+    const data = new Blob([JSON.stringify({ session_id: sessionId.value })], {
+      type: 'application/json'
+    })
+    navigator.sendBeacon(`${API_BASE_URL}/session/cleanup`, data)
+  } else {
+    // 降级方案：同步 DELETE 请求
+    const xhr = new XMLHttpRequest()
+    xhr.open('DELETE', `${API_BASE_URL}/session/${sessionId.value}`, false)
+    xhr.setRequestHeader('Content-Type', 'application/json')
+    xhr.send()
+  }
 }
 
 // 计算属性
