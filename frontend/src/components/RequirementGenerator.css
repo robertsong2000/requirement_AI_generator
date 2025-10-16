@@ -948,3 +948,184 @@
 .el-alert {
   border-radius: 6px;
 }
+
+/* 使用说明弹窗样式 */
+.user-guide-dialog :deep(.el-dialog) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.user-guide-dialog :deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px 24px;
+}
+
+.user-guide-dialog :deep(.el-dialog__title) {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.user-guide-dialog :deep(.el-dialog__headerbtn .el-dialog__close) {
+  color: white;
+  font-size: 20px;
+}
+
+.user-guide-dialog :deep(.el-dialog__body) {
+  padding: 0;
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+.user-guide-content {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.user-guide-content :deep(.el-collapse) {
+  border: none;
+}
+
+.user-guide-content :deep(.el-collapse-item__header) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+}
+
+.user-guide-content :deep(.el-collapse-item__header:hover) {
+  background: #e9ecef;
+  border-color: #667eea;
+  transform: translateX(4px);
+}
+
+.user-guide-content :deep(.el-collapse-item__arrow) {
+  font-size: 16px;
+  color: #667eea;
+  transition: transform 0.3s ease;
+}
+
+.user-guide-content :deep(.el-collapse-item__content) {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.user-guide-content :deep(.el-collapse-item__wrap) {
+  border: none;
+  background: transparent;
+}
+
+.guide-section {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  margin-bottom: 8px;
+}
+
+.guide-section h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.guide-section h4::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: #667eea;
+  border-radius: 2px;
+}
+
+.guide-section p {
+  margin: 0 0 12px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.guide-section p:last-child {
+  margin-bottom: 0;
+}
+
+.guide-section ul {
+  margin: 0 0 12px 0;
+  padding-left: 20px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.guide-section li {
+  margin-bottom: 6px;
+}
+
+.guide-section li:last-child {
+  margin-bottom: 0;
+}
+
+.guide-section strong {
+  color: #333;
+  font-weight: 600;
+}
+
+/* 滚动条样式 */
+.user-guide-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.user-guide-content::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 3px;
+}
+
+.user-guide-content::-webkit-scrollbar-thumb {
+  background: #c1c7cd;
+  border-radius: 3px;
+  border: 1px solid #f1f3f4;
+}
+
+.user-guide-content::-webkit-scrollbar-thumb:hover {
+  background: #a6acb2;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .user-guide-dialog :deep(.el-dialog) {
+    width: 95% !important;
+    margin: 0 auto;
+  }
+
+  .user-guide-content {
+    padding: 16px;
+  }
+
+  .guide-section {
+    padding: 16px;
+  }
+
+  .user-guide-content :deep(.el-collapse-item__header) {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .guide-section h4 {
+    font-size: 14px;
+  }
+
+  .guide-section p,
+  .guide-section li {
+    font-size: 13px;
+  }
+}

@@ -254,7 +254,147 @@ export const useLanguageStore = defineStore('language', () => {
     '请包含负面测试场景：\n- 无效的输入格式\n- 缺少必填字段\n- 系统错误处理\n- 网络中断场景\n- 资源耗尽情况\n- 格式错误的请求和数据损坏': {
       zh: '请包含负面测试场景：\n- 无效的输入格式\n- 缺少必填字段\n- 系统错误处理\n- 网络中断场景\n- 资源耗尽情况\n- 格式错误的请求和数据损坏',
       en: 'Please include negative test scenarios:\n- Invalid input formats\n- Missing required fields\n- System error handling\n- Network interruption scenarios\n- Resource exhaustion cases\n- Malformed requests and data corruption'
-    }
+    },
+
+    // 使用说明相关
+    '使用说明': { zh: '使用说明', en: 'User Guide' },
+    '🚀 快速开始': { zh: '🚀 快速开始', en: '🚀 Quick Start' },
+    '📋 功能说明': { zh: '📋 功能说明', en: '📋 Features' },
+    '✏️ 编辑功能': { zh: '✏️ 编辑功能', en: '✏️ Editing Features' },
+    '📤 导出功能': { zh: '📤 导出功能', en: '📤 Export Features' },
+    '💡 提示词模板': { zh: '💡 提示词模板', en: '💡 Prompt Templates' },
+    '🔧 故障排除': { zh: '🔧 故障排除', en: '🔧 Troubleshooting' },
+    '关闭': { zh: '关闭', en: 'Close' },
+
+    '第一步：输入需求': { zh: '第一步：输入需求', en: 'Step 1: Input Requirements' },
+    '第二步：设置参数': { zh: '第二步：设置参数', en: 'Step 2: Set Parameters' },
+    '第三步：解析需求': { zh: '第三步：解析需求', en: 'Step 3: Parse Requirements' },
+    '第四步：生成测试用例': { zh: '第四步：生成测试用例', en: 'Step 4: Generate Test Cases' },
+
+    '在左侧"需求输入"面板中，填写需求标题，然后选择一个预设模板或直接输入详细的需求描述。': {
+      zh: '在左侧"需求输入"面板中，填写需求标题，然后选择一个预设模板或直接输入详细的需求描述。',
+      en: 'In the "Requirement Input" panel on the left, fill in the requirement title, then select a preset template or directly input detailed requirement description.'
+    },
+    '选择测试类型（功能测试、性能测试等）、优先级和预估复杂度，这些参数会影响生成测试用例的范围和深度。': {
+      zh: '选择测试类型（功能测试、性能测试等）、优先级和预估复杂度，这些参数会影响生成测试用例的范围和深度。',
+      en: 'Select test type (functional testing, performance testing, etc.), priority, and estimated complexity. These parameters will affect the scope and depth of generated test cases.'
+    },
+    '点击"解析需求"按钮，系统会分析您的需求并提取测试用例的基本结构。': {
+      zh: '点击"解析需求"按钮，系统会分析您的需求并提取测试用例的基本结构。',
+      en: 'Click the "Parse Requirements" button, and the system will analyze your requirements and extract the basic structure of test cases.'
+    },
+    '解析完成后，点击"生成测试用例"按钮，系统将生成详细的测试用例。': {
+      zh: '解析完成后，点击"生成测试用例"按钮，系统将生成详细的测试用例。',
+      en: 'After parsing is complete, click the "Generate Test Cases" button, and the system will generate detailed test cases.'
+    },
+
+    '系统提供了多种预设的需求模板，包括雨刷器测试、CAN通信测试、前大灯测试等，涵盖了汽车电子的常见测试场景。': {
+      zh: '系统提供了多种预设的需求模板，包括雨刷器测试、CAN通信测试、前大灯测试等，涵盖了汽车电子的常见测试场景。',
+      en: 'The system provides various preset requirement templates, including wiper tests, CAN communication tests, headlight tests, etc., covering common automotive electronic testing scenarios.'
+    },
+    '可以在"用户提示词"区域补充特定的测试要求，比如指定输出格式、重点关注的安全测试等。': {
+      zh: '可以在"用户提示词"区域补充特定的测试要求，比如指定输出格式、重点关注的安全测试等。',
+      en: 'You can supplement specific test requirements in the "User Prompt" area, such as specifying output format, focusing on security testing, etc.'
+    },
+    '支持导入.txt、.md、.json格式的需求文档，快速填充需求描述内容。': {
+      zh: '支持导入.txt、.md、.json格式的需求文档，快速填充需求描述内容。',
+      en: 'Supports importing requirement documents in .txt, .md, .json formats to quickly fill in requirement description content.'
+    },
+
+    '点击"编辑"按钮可以直接修改需求描述，支持Markdown和纯文本格式。': {
+      zh: '点击"编辑"按钮可以直接修改需求描述，支持Markdown和纯文本格式。',
+      en: 'Click the "Edit" button to directly modify requirement descriptions, supporting Markdown and plain text formats.'
+    },
+    '解析完成后，可以编辑测试用例的名称、目标、前置条件和测试步骤。': {
+      zh: '解析完成后，可以编辑测试用例的名称、目标、前置条件和测试步骤。',
+      en: 'After parsing is complete, you can edit the name, objectives, preconditions, and test steps of test cases.'
+    },
+    '对于复杂需求生成的多测试用例，可以点击"详情"按钮单独编辑每个测试用例的详细内容。': {
+      zh: '对于复杂需求生成的多测试用例，可以点击"详情"按钮单独编辑每个测试用例的详细内容。',
+      en: 'For multiple test cases generated from complex requirements, you can click the "Details" button to edit the detailed content of each test case individually.'
+    },
+
+    '包含完整的测试用例数据，便于系统集成和二次开发': {
+      zh: '包含完整的测试用例数据，便于系统集成和二次开发',
+      en: 'Contains complete test case data for system integration and secondary development'
+    },
+    '适合文档编写和版本控制': {
+      zh: '适合文档编写和版本控制',
+      en: 'Suitable for documentation writing and version control'
+    },
+    '包含基本信息和测试步骤两个工作表，便于测试管理': {
+      zh: '包含基本信息和测试步骤两个工作表，便于测试管理',
+      en: 'Contains two worksheets for basic information and test steps, facilitating test management'
+    },
+    '选择任意测试用例后，可以使用导出功能将测试用例保存为不同格式的文件。': {
+      zh: '选择任意测试用例后，可以使用导出功能将测试用例保存为不同格式的文件。',
+      en: 'After selecting any test case, you can use the export function to save the test case as files in different formats.'
+    },
+
+    '在用户提示词编辑区域，提供了多种快速模板按钮：': {
+      zh: '在用户提示词编辑区域，提供了多种快速模板按钮：',
+      en: 'In the user prompt editing area, multiple quick template buttons are provided:'
+    },
+    '生成英文格式的测试用例': {
+      zh: '生成英文格式的测试用例',
+      en: 'Generate test cases in English format'
+    },
+    '生成非常详细的测试步骤，包含具体操作和验证方法': {
+      zh: '生成非常详细的测试步骤，包含具体操作和验证方法',
+      en: 'Generate very detailed test steps including specific operations and verification methods'
+    },
+    '专注于安全相关的测试场景': {
+      zh: '专注于安全相关的测试场景',
+      en: 'Focus on security-related testing scenarios'
+    },
+    '包含全面的边界条件测试': {
+      zh: '包含全面的边界条件测试',
+      en: 'Include comprehensive boundary condition tests'
+    },
+    '包含负面测试和异常处理场景': {
+      zh: '包含负面测试和异常处理场景',
+      en: 'Include negative testing and exception handling scenarios'
+    },
+
+    '如果右上角的状态指示器显示为红色，表示后端服务连接失败。请检查服务是否正常运行。': {
+      zh: '如果右上角的状态指示器显示为红色，表示后端服务连接失败。请检查服务是否正常运行。',
+      en: 'If the status indicator in the upper right corner shows red, it indicates that the backend service connection failed. Please check if the service is running normally.'
+    },
+    '如果测试用例生成失败，请检查：': {
+      zh: '如果测试用例生成失败，请检查：',
+      en: 'If test case generation fails, please check:'
+    },
+    '需求描述是否足够详细和清晰': {
+      zh: '需求描述是否足够详细和清晰',
+      en: 'Whether the requirement description is detailed and clear enough'
+    },
+    '网络连接是否正常': {
+      zh: '网络连接是否正常',
+      en: 'Whether the network connection is normal'
+    },
+    '用户提示词是否包含矛盾的要求': {
+      zh: '用户提示词是否包含矛盾的要求',
+      en: 'Whether user prompts contain contradictory requirements'
+    },
+    '内容优化建议': {
+      zh: '内容优化建议',
+      en: 'Content Optimization Suggestions'
+    },
+    '需求描述应该包含具体的功能要求和测试条件': {
+      zh: '需求描述应该包含具体的功能要求和测试条件',
+      en: 'Requirement descriptions should include specific functional requirements and test conditions'
+    },
+    '明确测试目标和验收标准': {
+      zh: '明确测试目标和验收标准',
+      en: 'Clearly define test objectives and acceptance criteria'
+    },
+    '提供相关的技术规格和约束条件': {
+      zh: '提供相关的技术规格和约束条件',
+      en: 'Provide relevant technical specifications and constraints'
+    },
+
+    // 文件上传相关
+    '加载需求文件': { zh: '加载需求文件', en: 'Load Requirement File' }
   })
 
   function t(key: string): string {

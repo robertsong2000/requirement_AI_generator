@@ -5,6 +5,15 @@
       <h1>{{ t('需求生成测试用例系统') }}</h1>
       <div class="header-actions">
         <el-button
+          @click="showUserGuide"
+          size="small"
+          type="info"
+          circle
+          :title="t('使用说明')"
+        >
+          📖
+        </el-button>
+        <el-button
           @click="handleLanguageToggle"
           size="small"
           type="primary"
@@ -796,6 +805,128 @@
         <el-button type="primary" @click="saveIndividualTestCaseEdit">{{ t('保存') }}</el-button>
       </template>
     </el-dialog>
+
+    <!-- 使用说明弹窗 -->
+    <el-dialog
+      v-model="isUserGuideVisible"
+      :title="t('使用说明')"
+      width="80%"
+      :before-close="closeUserGuide"
+      class="user-guide-dialog"
+    >
+      <div class="user-guide-content">
+        <el-collapse v-model="activeGuideSections" accordion>
+          <!-- 快速开始 -->
+          <el-collapse-item :title="t('🚀 快速开始')" name="quickstart">
+            <div class="guide-section">
+              <h4>{{ t('第一步：输入需求') }}</h4>
+              <p>{{ t('在左侧"需求输入"面板中，填写需求标题，然后选择一个预设模板或直接输入详细的需求描述。') }}</p>
+
+              <h4>{{ t('第二步：设置参数') }}</h4>
+              <p>{{ t('选择测试类型（功能测试、性能测试等）、优先级和预估复杂度，这些参数会影响生成测试用例的范围和深度。') }}</p>
+
+              <h4>{{ t('第三步：解析需求') }}</h4>
+              <p>{{ t('点击"解析需求"按钮，系统会分析您的需求并提取测试用例的基本结构。') }}</p>
+
+              <h4>{{ t('第四步：生成测试用例') }}</h4>
+              <p>{{ t('解析完成后，点击"生成测试用例"按钮，系统将生成详细的测试用例。') }}</p>
+            </div>
+          </el-collapse-item>
+
+          <!-- 功能说明 -->
+          <el-collapse-item :title="t('📋 功能说明')" name="features">
+            <div class="guide-section">
+              <h4>{{ t('需求模板') }}</h4>
+              <p>{{ t('系统提供了多种预设的需求模板，包括雨刷器测试、CAN通信测试、前大灯测试等，涵盖了汽车电子的常见测试场景。') }}</p>
+
+              <h4>{{ t('用户提示词') }}</h4>
+              <p>{{ t('可以在"用户提示词"区域补充特定的测试要求，比如指定输出格式、重点关注的安全测试等。') }}</p>
+
+              <h4>{{ t('复杂度设置') }}</h4>
+              <ul>
+                <li><strong>{{ t('简单') }}</strong>: {{ t('生成单个测试用例，包含3-4个核心测试步骤') }}</li>
+                <li><strong>{{ t('中等') }}</strong>: {{ t('生成单个测试用例，包含5-6个测试步骤，包含正常流程和基本异常场景') }}</li>
+                <li><strong>{{ t('复杂') }}</strong>: {{ t('生成2-4个相关测试用例，分别关注基本功能验证、异常场景处理、边界条件测试等') }}</li>
+              </ul>
+
+              <h4>{{ t('文件导入') }}</h4>
+              <p>{{ t('支持导入.txt、.md、.json格式的需求文档，快速填充需求描述内容。') }}</p>
+            </div>
+          </el-collapse-item>
+
+          <!-- 编辑功能 -->
+          <el-collapse-item :title="t('✏️ 编辑功能')" name="editing">
+            <div class="guide-section">
+              <h4>{{ t('需求描述编辑') }}</h4>
+              <p>{{ t('点击"编辑"按钮可以直接修改需求描述，支持Markdown和纯文本格式。') }}</p>
+
+              <h4>{{ t('解析结果编辑') }}</h4>
+              <p>{{ t('解析完成后，可以编辑测试用例的名称、目标、前置条件和测试步骤。') }}</p>
+
+              <h4>{{ t('测试用例详情编辑') }}</h4>
+              <p>{{ t('对于复杂需求生成的多测试用例，可以点击"详情"按钮单独编辑每个测试用例的详细内容。') }}</p>
+            </div>
+          </el-collapse-item>
+
+          <!-- 导出功能 -->
+          <el-collapse-item :title="t('📤 导出功能')" name="export">
+            <div class="guide-section">
+              <h4>{{ t('支持的导出格式') }}</h4>
+              <ul>
+                <li><strong>{{ t('JSON格式') }}</strong>: {{ t('包含完整的测试用例数据，便于系统集成和二次开发') }}</li>
+                <li><strong>{{ t('Markdown格式') }}</strong>: {{ t('适合文档编写和版本控制') }}</li>
+                <li><strong>{{ t('Excel格式') }}</strong>: {{ t('包含基本信息和测试步骤两个工作表，便于测试管理') }}</li>
+              </ul>
+
+              <h4>{{ t('批量导出') }}</h4>
+              <p>{{ t('选择任意测试用例后，可以使用导出功能将测试用例保存为不同格式的文件。') }}</p>
+            </div>
+          </el-collapse-item>
+
+          <!-- 提示词模板 -->
+          <el-collapse-item :title="t('💡 提示词模板')" name="prompts">
+            <div class="guide-section">
+              <h4>{{ t('快速模板功能') }}</h4>
+              <p>{{ t('在用户提示词编辑区域，提供了多种快速模板按钮：') }}</p>
+              <ul>
+                <li><strong>{{ t('使用英文生成') }}</strong>: {{ t('生成英文格式的测试用例') }}</li>
+                <li><strong>{{ t('详细步骤') }}</strong>: {{ t('生成非常详细的测试步骤，包含具体操作和验证方法') }}</li>
+                <li><strong>{{ t('安全测试') }}</strong>: {{ t('专注于安全相关的测试场景') }}</li>
+                <li><strong>{{ t('边界条件') }}</strong>: {{ t('包含全面的边界条件测试') }}</li>
+                <li><strong>{{ t('异常场景') }}</strong>: {{ t('包含负面测试和异常处理场景') }}</li>
+              </ul>
+            </div>
+          </el-collapse-item>
+
+          <!-- 故障排除 -->
+          <el-collapse-item :title="t('🔧 故障排除')" name="troubleshooting">
+            <div class="guide-section">
+              <h4>{{ t('连接失败') }}</h4>
+              <p>{{ t('如果右上角的状态指示器显示为红色，表示后端服务连接失败。请检查服务是否正常运行。') }}</p>
+
+              <h4>{{ t('生成失败') }}</h4>
+              <p>{{ t('如果测试用例生成失败，请检查：') }}</p>
+              <ul>
+                <li>{{ t('需求描述是否足够详细和清晰') }}</li>
+                <li>{{ t('网络连接是否正常') }}</li>
+                <li>{{ t('用户提示词是否包含矛盾的要求') }}</li>
+              </ul>
+
+              <h4>{{ t('内容优化建议') }}</h4>
+              <ul>
+                <li>{{ t('需求描述应该包含具体的功能要求和测试条件') }}</li>
+                <li>{{ t('明确测试目标和验收标准') }}</li>
+                <li>{{ t('提供相关的技术规格和约束条件') }}</li>
+              </ul>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+      </div>
+
+      <template #footer>
+        <el-button @click="closeUserGuide">{{ t('关闭') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -920,6 +1051,10 @@ const editedUserPrompt = ref<string>('')
 const isEditingIndividualTestCase = ref<boolean>(false)
 const editingIndividualTestCase = ref<any>(null)
 const editingTestCaseIndex = ref<number>(-1)
+
+// 使用说明弹窗相关
+const isUserGuideVisible = ref<boolean>(false)
+const activeGuideSections = ref<string>('quickstart')
 
 // 表单数据
 const requirementData = reactive<RequirementData>({
@@ -1827,6 +1962,15 @@ const formatTime = (isoString: string): string => {
 const handleLanguageToggle = () => {
   toggleLanguage()
   ElMessage.success(t('语言已切换'))
+}
+
+// 使用说明弹窗方法
+const showUserGuide = () => {
+  isUserGuideVisible.value = true
+}
+
+const closeUserGuide = () => {
+  isUserGuideVisible.value = false
 }
 
 // 计算属性
