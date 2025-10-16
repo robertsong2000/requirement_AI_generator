@@ -235,6 +235,24 @@
   gap: 15px;
 }
 
+.header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.model-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.model-label {
+  opacity: 0.9;
+}
+
 .session-info {
   font-size: 14px;
   opacity: 0.9;
@@ -888,6 +906,24 @@
 
   .header h1 {
     font-size: 24px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .header-info {
+    align-items: center;
+    gap: 8px;
+  }
+
+  .model-info {
+    font-size: 12px;
+  }
+
+  .session-info {
+    font-size: 13px;
   }
 
   .left-panel,

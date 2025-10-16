@@ -22,9 +22,15 @@
         >
           {{ languageStore.currentLanguage === 'zh' ? 'EN' : '中' }}
         </el-button>
-        <div class="session-info">
-          {{ t('会话ID') }}: {{ sessionId }}
-          <span :class="['status-indicator', isConnected ? 'status-connected' : 'status-disconnected']"></span>
+        <div class="header-info">
+          <div class="model-info" v-if="modelName">
+            <span class="model-label">{{ t('AI模型') }}:</span>
+            <el-tag size="small" type="success" effect="light">{{ modelName }}</el-tag>
+          </div>
+          <div class="session-info">
+            {{ t('会话ID') }}: {{ sessionId }}
+            <span :class="['status-indicator', isConnected ? 'status-connected' : 'status-disconnected']"></span>
+          </div>
         </div>
       </div>
     </header>
@@ -331,7 +337,7 @@
         <section class="user-prompt-panel">
           <div class="panel-header">
             <h3>💡 {{ t('用户提示词') }}
-              <el-tooltip :content="t('用于补充system prompt的不足，可以指定特定的测试要求、格式或特殊场景')" placement="top">
+              <el-tooltip :content="t('指定当前需求的特定提示词，可以指定特定的测试要求、格式或特殊场景')" placement="top">
                 <el-icon class="help-icon"><QuestionFilled /></el-icon>
               </el-tooltip>
             </h3>
@@ -441,7 +447,7 @@
               </div>
               <div v-else class="empty-user-prompt">
                 <p>{{ t('💡 添加用户提示词...') }}</p>
-                <p style="font-size: 12px; color: #999;">{{ t('点击此处编辑，用于补充system prompt的不足') }}</p>
+                <p style="font-size: 12px; color: #999;">{{ t('点击此处编辑，补充当前需求的特定要求') }}</p>
               </div>
             </div>
           </div>
@@ -1028,6 +1034,7 @@ interface TestCasesGroup {
 // 响应式数据
 const sessionId = ref<string>(localStorage.getItem('requirement_session_id') || 'session_' + Math.random().toString(36).substr(2, 9))
 const isConnected = ref<boolean>(false)
+const modelName = ref<string>('')
 const selectedTemplate = ref<string>('')
 const requirementLanguage = ref<'markdown' | 'plaintext'>('markdown')
 const isParsing = ref<boolean>(false)
@@ -1433,10 +1440,12 @@ onMounted(() => {
 // 方法
 const checkHealth = async () => {
   try {
-    await axios.get(`${API_BASE_URL}/health`)
+    const response = await axios.get(`${API_BASE_URL}/health`)
     isConnected.value = true
+    modelName.value = response.data.model_name || ''
   } catch (_: any) {
     isConnected.value = false
+    modelName.value = ''
     ElMessage.error(t('服务连接失败'))
   }
 }

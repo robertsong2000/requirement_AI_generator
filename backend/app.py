@@ -302,7 +302,12 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "requirement_generator"}
+    model_name = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
+    return {
+        "status": "healthy",
+        "service": "requirement_generator",
+        "model_name": model_name
+    }
 
 @app.post("/parse-requirement")
 async def parse_requirement(request: ParseRequirementRequest):

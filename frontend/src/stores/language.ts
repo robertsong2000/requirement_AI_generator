@@ -15,6 +15,7 @@ export const useLanguageStore = defineStore('language', () => {
     // 标题和导航
     '需求生成测试用例系统': { zh: '需求生成测试用例系统', en: 'Requirement to Test Case Generator' },
     '会话ID': { zh: '会话ID', en: 'Session ID' },
+    'AI模型': { zh: 'AI模型', en: 'AI Model' },
 
     // 侧边栏
     '需求输入': { zh: '需求输入', en: 'Requirement Input' },
