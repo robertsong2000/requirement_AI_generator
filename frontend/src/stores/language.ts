@@ -402,7 +402,11 @@ export const useLanguageStore = defineStore('language', () => {
     '服务连接成功': { zh: '服务连接成功', en: 'Service connected successfully' },
     '正在检查连接': { zh: '正在检查连接', en: 'Checking connection' },
     '已连接': { zh: '已连接', en: 'Connected' },
-    '连接断开': { zh: '连接断开', en: 'Disconnected' }
+    '连接断开': { zh: '连接断开', en: 'Disconnected' },
+    '服务连接失败，请检查后端服务是否正常运行': {
+      zh: '服务连接失败，请检查后端服务是否正常运行',
+      en: 'Service connection failed, please check if the backend service is running normally'
+    }
   })
 
   function t(key: string): string {

@@ -1073,6 +1073,9 @@ const activeGuideSections = ref<string>('quickstart')
 // 心跳相关
 const heartbeatInterval = ref<NodeJS.Timeout | null>(null)
 const isCheckingHealth = ref<boolean>(false)
+const consecutiveFailures = ref<number>(0)
+const maxRetries = ref<number>(4) // 增加到4次，给后端更多启动机会
+const initialRetryDelay = ref<number>(3000) // 增加到3秒，减少频繁请求
 
 // 表单数据
 const requirementData = reactive<RequirementData>({
@@ -1452,12 +1455,12 @@ onMounted(() => {
   // 添加页面卸载事件监听器
   window.addEventListener('beforeunload', handleBeforeUnload)
 
-  // 显示首次连接状态
+  // 显示首次连接状态（延迟更长时间，给重试机制更多机会）
   setTimeout(() => {
-    if (!isConnected.value) {
-      ElMessage.warning(t('正在连接服务，请稍候...'))
+    if (!isConnected.value && consecutiveFailures.value < maxRetries.value) {
+      ElMessage.info(t('正在连接服务，请稍候...'))
     }
-  }, 1000)
+  }, 5000) // 延长到5秒，配合更长的启动延迟
 })
 
 onBeforeUnmount(() => {
@@ -1474,26 +1477,40 @@ onUnmounted(() => {
 })
 
 // 方法
-const checkHealth = async (showError = false) => {
-  if (isCheckingHealth.value) return
+const checkHealth = async (showError = false, isRetry = false) => {
+  if (isCheckingHealth.value && !isRetry) return
 
   isCheckingHealth.value = true
   try {
     const response = await axios.get(`${API_BASE_URL}/health`, {
-      timeout: 5000 // 5秒超时
+      timeout: 10000 // 增加到10秒超时
     })
     isConnected.value = true
     modelName.value = response.data.model_name || ''
+    consecutiveFailures.value = 0 // 重置失败计数
 
     // 如果之前是断开的，现在连接上了，显示成功消息
     if (showError) {
       ElMessage.success(t('服务连接成功'))
     }
-  } catch (_: any) {
+
+    console.log('✅ 服务连接成功, 模型:', modelName.value)
+  } catch (error: any) {
+    consecutiveFailures.value++
     isConnected.value = false
     modelName.value = ''
-    if (showError) {
-      ElMessage.error(t('服务连接失败'))
+
+    console.warn(`❌ 服务连接失败 (${consecutiveFailures.value}/${maxRetries.value}):`, error.message || error)
+
+    // 重试逻辑
+    if (consecutiveFailures.value < maxRetries.value && isRetry) {
+      const delay = initialRetryDelay.value * Math.pow(2, consecutiveFailures.value - 1) // 指数退避
+      console.log(`🔄 ${delay}ms后重试连接...`)
+      setTimeout(() => {
+        checkHealth(showError, true)
+      }, delay)
+    } else if (showError && consecutiveFailures.value >= maxRetries.value) {
+      ElMessage.error(t('服务连接失败，请检查后端服务是否正常运行'))
     }
   } finally {
     isCheckingHealth.value = false
@@ -1502,13 +1519,16 @@ const checkHealth = async (showError = false) => {
 
 // 启动心跳检查
 const startHeartbeat = () => {
-  // 立即检查一次
-  checkHealth(false)
+  // 立即检查一次（带重试）
+  checkHealth(false, true)
 
-  // 定期检查，每30秒一次
-  heartbeatInterval.value = setInterval(() => {
-    checkHealth(false)
-  }, 30000)
+  // 延迟启动定期检查，给后端服务更多启动时间
+  setTimeout(() => {
+    // 定期检查，每60秒一次（低频检查，减少服务器压力）
+    heartbeatInterval.value = setInterval(() => {
+      checkHealth(false) // 定期检查不使用重试，避免过于频繁
+    }, 60000) // 改为60秒
+  }, 10000) // 延长到10秒后开始定期检查，给后端更多启动时间
 }
 
 // 停止心跳检查
